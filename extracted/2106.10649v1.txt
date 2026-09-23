@@ -1,0 +1,786 @@
+CAMERAS: Enhanced Resolution And Sanity preserving Class Activation
+Mapping for image saliency
+Mohammad A. A. K. Jalwana
+Naveed Akhtar
+Mohammed Bennamoun
+Ajmal Mian
+Computer Science and Software Engineering, The University of Western Australia.
+{mohammad.jalwana@research., naveed.akhtar@, mohammed.bennamoun@, ajmal.mian@}uwa.edu.au
+Code:
+https://github.com/VisMIL/CAMERAS
+Abstract
+Backpropagation image saliency aims at explaining
+model predictions by estimating model-centric impor-
+tance of individual pixels in the input.
+However, class-
+insensitivity of the earlier layers in a network only allows
+saliency computation with low resolution activation maps of
+the deeper layers, resulting in compromised image saliency.
+Remedifying this can lead to sanity failures. We propose
+CAMERAS, a technique to compute high-ﬁdelity backprop-
+agation saliency maps without requiring any external priors
+and preserving the map sanity. Our method systematically
+performs multi-scale accumulation and fusion of the acti-
+vation maps and backpropagated gradients to compute pre-
+cise saliency maps. From accurate image saliency to artic-
+ulation of relative importance of input features for different
+models, and precise discrimination between model percep-
+tion of visually similar objects, our high-resolution map-
+ping offers multiple novel insights into the black-box deep
+visual models, which are presented in the paper. We also
+demonstrate the utility of our saliency maps in adversarial
+setup by drastically reducing the norm of attack signals by
+focusing them on the precise regions identiﬁed by our maps.
+Our method also inspires new evaluation metrics and a san-
+ity check for this developing research direction.
+1. Introduction
+Deep visual models are fast surpassing human-level per-
+formance for various vision tasks, including image classiﬁ-
+cation [15], [28], object detection [22], [23], and semantic
+segmentation [17], [5]. However, they hardly offer any ex-
+planation of their decisions, and are rightfully considered
+black-boxes. This is problematic for their practical deploy-
+ment, especially in high-risk emerging applications where
+transparency is vital, e.g. in healthcare, self-driving vehicles
+and smart surveillance [21]. The problem is exacerbated
+by the push of ‘right to explanation’ by algorithmic regula-
+tory authorities and their objection to black-box models in
+safety-critical applications [1].
+Addressing this issue for deep visual models, tech-
+niques are emerging to offer input-agnostic [11] and input-
+speciﬁc [8], [21], [25] explanation of model predictions.
+This work subscribes to the latter, where the ultimate goal
+is to identify the contribution of each pixel in an input to
+the output prediction. The popular techniques to achieve
+this adopt one of two strategies. The ﬁrst, systematically
+modiﬁes the input image pixels (i.e. image regions) and an-
+alyzes the effects of those perturbations on the output pre-
+dictions [8], [9], [20], [33]. The underlying search nature
+of this perturbation-based formulation offers high-ﬁdelity
+model-centric importance attribution to the input pixels, al-
+beit at a high computational cost.
+Hence, tractability is
+achieved under heuristics or external priors over the com-
+puted importance maps.
+This is undesired because the
+eventual maps may be inﬂuenced by these external factors,
+which compromises the model-ﬁdelity of the maps.
+The second strategy relies on the activation maps of the
+internal layers and gradients of the models.
+Commonly
+known as backpropagation saliency methods [25], [21],
+[27], [30], [33], [34] approaches adopting this strategy are
+computationally efﬁcient, thereby offering the possibility
+of avoiding unnecessary heuristics or priors. However, for
+the visual neural models, the layers closer to the input are
+class-insensitive [21]. This limits the ammunition of back-
+propagation saliency methods to the deeper layers of the
+networks, where the size of activation maps is very small,
+e.g. 10−3× of the input size. Projecting the saliency com-
+puted with those maps onto the original image grid results
+in intrinsically low-resolution image saliency. On the other
+hand, using heuristics or priors to sharpen those projections
+inadvertently compromise the sanity of the maps [2]. Not to
+mention, employing activation signals of multiple internal
+layers for resolution enhancement takes us back to a combi-
+natorial search problem of choosing the best layers, under a
+pre-speciﬁed heuristic.
+Addressing the above issues, we introduce CAMERAS
+- an Enhanced Resolution And Sanity preserving Class
+Activation Mapping for backpropagation image saliency.
+arXiv:2106.10649v1 [cs.CV] 20 Jun 2021
+Figure 1. (Top) CAMERAS meticulously fuses activation maps and backpropagated gradients of a layer for multi-scale copies of an input.
+After passing the resulting saliency map through ReLU and normalising it (f), the map is embedded on the original image. (Bottom) By
+avoiding inﬂuence of external factors, CAMERAS easily passes the sanity checks for image saliency. Shown are the results of cascading
+randomization [2] on ResNet. Progressive randomising of layer weights randomises the output right from the logits layer which identiﬁes
+preservation of sanity. Thus, the CAMERAS maps do not sacriﬁce their sanity for high-resolution, achieving the best of both worlds.
+The proposed technique (Fig. 1-top) systematically accu-
+mulates and fuses multi-scale activation maps and back-
+propagated gradients of a model to construct precise
+saliency maps.
+By avoiding the inﬂuence of any exter-
+nal factor, e.g. heuristics, priors, thresholds, the saliency
+maps of CAMERAS easily pass the sanity checks for im-
+age saliency (Fig. 1-bottom). Moreover, the technique al-
+lows saliency estimation with a single network layer, not
+requiring any layer search for map resolution enhancement.
+Contributions of the paper are summarised below:
+• We propose CAMERAS for precise backpropagation
+image saliency while preserving the sanity.
+Our
+method outperforms the state-of-the-art saliency meth-
+ods by a large margin, achieving up to 27.5% error re-
+duction for the popular pointing game metric [34].
+• Exploring the newly found precision saliency map-
+ping with CAMERAS, we visualise differences in the
+semantic understanding of different architectures that
+govern their performance. We also highlight model-
+centric discrimination of input features for visually
+similar objects in never-before-seen details.
+• Considering the equivalent treatment of deep mod-
+els as differentiable programs by the fast-developing
+parallel ﬁeld of adversarial learning, we enhance
+the widely considered strongest adversarial attack
+PGD [18] with our saliency technique - drastically im-
+proving the efﬁcacy of the attack.
+• The ability of precise saliency computation allowed by
+CAMERAS calls for new quantitative metrics and san-
+ity checks. We contribute two new evaluation metrics
+and a sanity check to advance this research direction.
+2. Related work
+The literature has seen multiple techniques that perturb
+input pixels and measure its effects on the model outputs
+to identify salient regions in input images [9], [8], [20].
+Perturbing every possible combination of pixels has an ex-
+ponential complexity.
+Therefore, such techniques often
+rely on ﬁxed subsets of pixel combinations for tractabil-
+ity. Moreover, high non-linearity of deep models further
+restricts the saliency map to be reliable under ﬁxed de-
+vised perturbation subsets. RISE [20] and Occlusion [33]
+generate attribution maps by weighing perturbation masks
+corresponding to the changes in the output scores. Other
+techniques, such as Meaningful perturbations [9], Extremal
+perturbations [8], Real-time saliency [6] and [24] cast the
+problem into an optimization objective. Though effective,
+these methods face a common issue of allowing a channel
+for external inﬂuence on the resulting maps in the form of
+e.g. heuristics, external constraints, priors or threshold etc.
+Backpropagation saliency methods [27], [25], [33] aim
+at extracting information from within the model to identify
+model-centric salient regions in an input image. Relying
+on layer activations and model gradients, these methods are
+also known to be computationally more effective [36], [12].
+Simoyan et al. [27] ﬁrst used model gradients as a possi-
+ble explanation of output predictions. Different adaptations
+have since been proposed to mitigate the inherent noise sen-
+sitivity of model gradients.
+Guided back prop [30] and
+DeConvNet [33] alter the backpropagation rules of model
+ReLU layers, while SmoothGrad [29] computes the aver-
+age gradients over samples in the close vicinity of the origi-
+nal one. Similarly, DeepLIFT [26], LRP [4] and Excitation
+Backprop [34] recast the backpropagation rules such that
+the sum of attribution signal becomes unity. Sundararajan et
+al. [31] interpolated multiple attribution maps to reduce the
+signal noise. There are also instances of exploring saliency
+computation using various layers of deep models by merg-
+ing the layer activation maps with the gradient information.
+Such methods include CAM [35], its generalized adaption
+GradCAM [25], linear approximation [14] and NormGrad
+[21]. For such methods, it is found that the layers closer to
+output generate better saliency maps because those layers
+are more sensitive to the high level class features.
+Beyond the visual quality of saliency maps, a few works
+have also critically explored the reliability of these maps for
+different methods [19], [13]. Adebayo et al. [2] ﬁrst intro-
+duced sanity checks for image saliency methods, highlight-
+ing that visual appeal of the maps alone can be misleading.
+They evaluated sensitivity of the results of popular tech-
+niques to model parameters. Surprisingly, ‘model-centric
+saliency maps’ computed by multiple methods were found
+insensitive to the model - failing the sanity check. The tech-
+niques avoiding external inﬂuences on the map, e.g. Grad-
+CAM [25] easily passed the test. This ﬁnding also resonated
+with other subsequent sanity checks [21].
+Evaluation of image saliency methods is a challenging
+problem because deep model representation is not always
+aligned with the human visual system [32]. Hence, indi-
+rect evaluation of image saliency is often done by analysing
+its weak localization performance. For instance, Pointing
+game score [34] is a commonly used metric for quantitative
+evaluation of image saliency results [8], [21]. It measures
+the correlation between the maximal point in a saliency map
+with the semantic labels of the pixel. Its later adaptation [9]
+measures the overlap in the bounding boxes from saliency
+maps and the ground truth. Petsiuk et al. [20] proposed
+insertion-deletion metrics to measure the impact of pertur-
+bations over image patches in the order of importance to
+quantify saliency accuracy. Nevertheless, these metrics are
+meant to be weak indicators of saliency maps due to the im-
+precise nature of the maps computed by the earlier methods,
+which is no longer the case for CAMERAS.
+3. Proposed Approach
+Before discussing the details of our technique, we ﬁrst
+provide a closer look at the broader paradigm of backprop-
+agation saliency computation. We use Grad-CAM [25] - a
+popular technique - as a test case to motivate the proposed
+method. The text below highlights only the relevant aspects
+of the test case for intuition.
+3.1. Saliency computation with backpropagation
+Let I ∈Rc×h×w be an input image with ‘c’ channels.
+A deep visual classiﬁer K(I) maps I to a prediction vector
+yℓ∈RL, where ‘L’ is the total number of classes. Here, ‘ℓ’
+indicates the predicted label of I under the premise that the
+ℓth coefﬁcient of y has the largest value. It is well-known
+that a neural network is a hierarchical composition of rep-
+resentation layers.
+Rebufﬁet al. [21] demonstrated that
+among these layers, those closer to the input learn class-
+insensitive features.
+Thus, the deeper layers hold more
+promise for computing image saliency for a model. Grad-
+CAM [25] takes a pragmatic approach to single out the last
+convolutional layer to estimate the saliency map.
+Let us denote the kth activation map of the last convo-
+lutional layer of a network as Ak(I) ∈Rm×n. Focusing
+on Grad-CAM, the technique ﬁrst computes an intermedi-
+ate representation S(I) ∈Rm×n, such that S(i,j)(I) =
+k wkA(i,j)
+(I), where wk is given by Eq. (1). Henceforth,
+we ignore the argument (I) for clarity, unless required.
+wk =
+(m + n)
+i=1
+j=1
+∂yℓ
+∂A(i,j)
+(1)
+In the above expressions, X(i,j) is the (i, j) coefﬁcient of
+X. The computed S is later extended to the ﬁnal saliency
+map Ψ ∈Rh×w, as f(S) : S →Ψ, where the function
+f(.) must account for interpolating an m × n matrix for a
+h × w grid (along other complementary transformations).
+3.2. Sub-optimality of backpropagation methods
+Observing Grad-CAM (and similar methods) from the
+above perspective reveals two performance drain-holes in
+backpropagation image saliency computations.
+(a) Over-simpliﬁcation of the weights wk: Since Ak is an
+activation map, individual coefﬁcients of this matrix should
+have different importance for the ﬁnal prediction. Indeed,
+this is also reﬂected in the values of individual backpropa-
+gated gradients for these coefﬁcients - computed with the
+expression in the parenthesis in Eq. (1).
+Since the ul-
+timate objective of image saliency is to compute impor-
+tance of individual pixels, loosing information with over-
+simpliﬁcation of wk is not conducive. Grad-CAM takes an
+extreme approach of representing wk with a scalar value.
+The main reason for that is, it is actually detrimental to
+plainly replace wk with an encoding W k ∈Rm×n such that
+S = P
+k W k ⊙Ak. Here, ⊙is the point-wise product and
+W k encodes individual backpropagated gradients. Gradi-
+ents are extremely sensitive to signal variations.
+Hence,
+even a small activation change can result in (a mislead-
+ing) exaggerated weight alteration for the activation map,
+resulting in incorrect image saliency. Grad-CAM is able to
+mitigate this problem by averaging the gradients in Eq. (1).
+However, this remedy comes at the cost of loosing the ﬁne-
+grained information about the gradients.
+Though centered around Grad-CAM, the above discus-
+sion points to a simple, yet powerful generic notion for ef-
+fective backpropagation saliency computation. That is, to
+better leverage the backpropagated gradients, the differen-
+tial information of the gradients (in W k) is still at our dis-
+posal to exploit. Fusing activation maps with this informa-
+tion promises more precise image saliency.
+(b) Large interpolated segments: Typically, the activation
+maps of the deeper convolutional layer in visual classiﬁers
+are (spatially) much smaller than the input images. For in-
+stance, in ResNet [10], the 7 × 7 maps of the last convo-
+lutional layer are 1024 times smaller than the 224 × 224
+inputs. Thus, for m ≪h and n ≪w, a saliency map
+Ψ computed with the class sensitive deeper layers must be
+mainly composed of interpolated segments. To contextual-
+ize, in the above ResNet example, 99.9% of the values are
+generated by the function f(S) : S →Ψ in Grad-CAM.
+This automatically renders Ψ a low-resolution map, leaving
+alone the issue of correctness of the importance assigned
+to the individual pixels in the eventual saliency map. The
+low resolution of saliency maps has also spawned methods
+to improve f(.) [2], [25]. However, those techniques in-
+evitably rely on external information (including heuristics)
+for the transform S →Ψ due to unavailability of further
+useful information from the model itself. This leads to san-
+ity check failures because the operands are no longer purely
+grounded in the original model.
+3.3. The room for improvement
+From the above discussion, it is clear that whereas use-
+ful techniques exist for backpropagation image saliency, the
+paradigm is yet to fully harness the backpropagated gradi-
+ents and resolution enhancement of the activation maps for
+precise image saliency. Both limitations are rooted in the
+very nature of the underlying signals. Leveraging these sig-
+nals from multiple layers can potentially help in partially
+overcoming the issues.
+However, this possibility is also
+restricted by the class-insensitivity of the earlier network
+layers and combinatorial nature of the problem. Moreover,
+there is evidence that multi-layer fusion can often adversely
+affect image saliency [21]. Hence, a technique speciﬁcally
+targeting the class-sensitive last layer, while allowing min-
+imal loss of differential information across backpropagated
+gradients and improving activation map upsampling, holds
+signiﬁcant promises for better saliency computation.
+3.4. CAMERAS
+Building directly on the insights in § 3.3, we devise
+CAMERAS - an enhanced resolution and sanity preserv-
+ing class activation mapping scheme. The approach is il-
+lustrated in Fig. (1-top) and explained below in a top-down
+manner, keeping the ﬂow of the above discussion.
+Our method eventually computes a saliency map as:
+Ψ = f
+ReLU
+  X
+Wk ⊙
+, ∀k,
+(2)
+where
+Wk ∈Rh×w encodes the differential information
+of the backpropagated gradients for the kth activation map
+in a network layer,
+Ak ∈Rh×w is an enhanced resolution
+encoding for the activation map itself, and f(.) performs an
+element-wise normalisation in the range [0, 1]. The
+Wk and
+Ak are deﬁned as follows
+Wk = E
+ W k(ϕt(I, ζt)), ζo
+(3)
+Ak = E
+ Ak(ϕt(I, ζt)), ζo
+where ϕt(X, ζt) is the tth up-sampling applied to resize X
+to the dimensions ζt - provided as a tuple. We ﬁx ζo =
+(h, w) for I ∈Rc×h×w. This will be explained shortly. We
+compute the (i, j) coefﬁcient of W k as
+∂yℓ
+∂A(i,j)
+. The
+overall process of generating an image saliency map with
+CAMERAS is summarized as Algorithm 1.
+The algorithm computes the desired saliency map Ψ by
+an iterative multi-scale accumulation of activation maps and
+gradients for the κth layer of the model. In the tth iteration,
+the input image I gets up-sampled to ζt based on the max-
+imum desired size ζm and the number of steps N allowed
+to reach that size (lines 4,5). Provided that the input up-
+scaling does not alter the model prediction, the activation
+maps and backpropagated gradients to the κth layer are also
+up-sampled and stored. We show this on lines 6-10 of the al-
+gorithm. Notice that, we use calligraphic symbols to distin-
+guish 3D tensors from matrices (e.g. A instead of A for ac-
+tivations) in the algorithm for clarity. The newly introduced
+symbol ∇J (κ, ℓ) on line 9 denotes the collective backprop-
+agated gradients to the κth layer w.r.t. the predicted label
+ℓ. Also notice, on lines 8, 9, up-sampling of the activa-
+tion maps and gradients are performed to match the original
+image size ζo. This is because, the same accumulated sig-
+nals are eventually transformed into the saliency map of the
+original image. We iteratively accumulate the up-sampled
+activation maps and gradients, and ﬁnally compute their av-
+erages on lines 12 and 13. On line 14, we compute the
+saliency map by solving Eq. (2). Here, matrix notation is
+intentionally used to match the original equation.
+Algorithm 1 CAMERAS algorithm
+Input: Classiﬁer K, image I ∈Rc×h×w, maximum size
+ζm, steps N, interpolation function ϕ(.), layer κ
+Output: Image saliency map Ψ ∈Rh×w
+1: Initialize Ao, Wo to 0 tensors, ζo = (h, w) and t =
+tm = 0, ℓ= K(I)
+2: while t ≤N do
+t ←t + 1
+ζt ←ζt−1 + ⌊ζm
+N ⌋(t −1)
+It ←ϕt(I, ζt)
+if K(It) →ℓthen
+tm ←tm + 1
+At ←At−1 + ϕt
+ A(It, κ), ζo
+Wt ←Wt−1 + ϕt
+ ∇J (κ, ℓ), ζo
+10:
+end if
+11: end while
+12:
+A ←At/tm
+13:
+W ←Wt/tm
+14: Ψ = f
+ReLU(P
+Wk ⊙
+Ak)
+, ∀k
+15: return
+In Algorithm 1, CAMERAS is shown to expect four
+input parameters, along with the classiﬁer and the image.
+We discuss the choice of ϕ(.) in § 3.4.1 where we even-
+tually propose to keep this function ﬁxed. The algorithm
+optionally allows κ for computing saliency maps using lay-
+ers other than the last convolutional layer of the model. For
+all the experiments presented in the main paper, we keep κ
+ﬁxed to the last convolutional layer. This is due to the well-
+known class-sensitivity of the deeper layers of CNNs [21].
+Essentially, the only choice to be made is for the values of
+parameters ζm and N, which are related as ζm = cNζo,
+where c is the step size. Trading-off performance with ef-
+ﬁciency, the choice of these parameters is mainly governed
+by the available computational resources. For larger ζm and
+N values, performance of CAMERAS roughly improves
+monotonically - generally saturating at ζm ≈(1K, 1K) for
+ζo = (224, 224) for the popular ImageNet models. For
+this ζm range, the performance is largely insensitive for
+N ∈[5, 10]. We give further analysis of parameter values in
+the supplementary material. In the presented experiments,
+we empirically choose ζm = (1K, 1K) and N = 7.
+3.4.1
+Sanity preservation and strength
+In CAMERAS, we do not impose any prior over the
+saliency map, nor we use any heuristic to guide its com-
+putation process. The technique also preserves model ﬁ-
+delity by requiring no structural (or any other) alteration
+to the original model. It mainly relies on primitive arith-
+metic operations over the model signals. These attributes
+also characterize those other methods that pass the popular
+sanity checks for backpropagation saliency [2], [21], albeit
+resulting in low-resolution saliency maps. In CAMERAS,
+the only source of any ‘potential’ external inﬂuence on the
+resulting map is through the interpolation function ϕ(.). We
+conjecture that as long as ϕ(.) is a ﬁrst-order function de-
+ﬁned over the signals originating in the model itself, CAM-
+ERAS maps will always preserve their sanity because the
+maps would fully originate in the model. To preclude any
+unintentional prior over the maps, our formulation dictates
+the use of simpler functions as ϕ(.). Hence, we choose to
+ﬁx bi-linear interpolation as ϕ(.).
+To analyse the reasons of extraordinary performance of
+CAMERAS (see § 4), we provide a brief theoretical per-
+spective on the accumulation of multi-scale interpolated
+signals exploited by our method, using the results below.
+Lemma 3.1: For
+X ∈Rh×w and its interpolated approx-
+imation f
+X = ϕ(X) s.t. X ∈Rm×n and
+X̸ = f
+X −f
+X|| = f ((h −m), (w −n)) for m < h and n < w,
+where ϕ(.) denotes bi-linear interpolation and f(.) is a
+monotonic function over its arguments.
+Lemma 3.2: For f
+Xz = ϕ(Xz), where Xz ∈Rm×n and
+Xp = ϕ(Xp), where Xp ∈Rp×q s.t. p < m and n < q,
+X −f
+Xz|| −||
+X −f
+Xp|| ≤0.
+Corollary: E
+z [||
+X −f
+Xz||] ≤||
+X −f
+Xp||, ∀f
+Xz ∪f
+Xp.
+The lemma 3.1 states that bi-linear interpolation tends to be
+more accurate when the difference in the dimensions of the
+source signal and the target grid is smaller. The lemma 3.2
+can also be easily veriﬁed as f
+Xz is at least as accurate a
+projection of
+X as f
+Xp, according to lemma 3.1. This nec-
+essarily makes its error equal to or smaller than the error
+of f
+Xp. In the light of lemma 3.2, the corollary afﬁrms that
+the expected error of a set of interpolated signals is upper-
+bounded by the error of the least accurate signal in the set.
+The above analysis highlights an important aspect. The
+CAMERAS results will necessarily be as accurate as op-
+erating our algorithm on the original input size, and will
+improve monotonically thereof with the up-sampled inputs.
+This is because the activations and gradients of the up-
+sampled inputs would map more accurately on the original
+image grid, as per the above results. This is signiﬁcant be-
+cause it allows CAMERAS to use the differential informa-
+tion in the backpropagated gradient maps while accounting
+for the noise-sensitivity of the gradients by averaging out
+these signals across multiple scales. This is the key strength
+of the proposed technique.
+4. Evaluation
+We perform a thorough qualitative and quantitative eval-
+uation of CAMERAS on large-scale models and compare
+the performance with the state-of-the-art methods.
+Figure 2. Visual comparison of saliency maps with the state-of-the-art methods. Representative maps are shown for random class images
+for ResNet-50, DenseNet-121 and Inception-v3. Class labels are provided at the top. Results of proposed CAMERAS are in yellow box.
+4.1. Qualitative results
+In Fig. 2, we qualitatively compare the results of our
+technique with the existing saliency methods for ImageNet
+models of ResNet, DenseNet and Inception. Representa-
+tive maps of randomly chosen images are provided. See
+the supplementary material for more visualisations. The
+high quality of CAMERAS maps is apparent in the ﬁg-
+ure. A quick inspection reveals that our technique main-
+tains its performance across a variety of scenarios, includ-
+ing clear objects (Loudspeaker, Mountain tent), occluded
+objects (Bulbul), and multiples instances of objects (Accor-
+dion, Basket). Observing carefully, CAMERAS maps pro-
+vide precise maps even for small and relatively complex ge-
+ometric shapes, e.g. Volleyball, Spotlight, Loafer, Hognose
+snake. Interestingly, our method is able to attach appropri-
+ate importance even to the reﬂection of the Hognose snake.
+Adoption of saliency maps to complex geometric shapes is
+a direct consequence of enabling precise saliency mapping
+while sealing-off any external inﬂuence on the maps. CAM-
+ERAS is able to maintain its characteristic precision across
+different models and images. These are highly promising
+results for explainability of modern deep visual classiﬁers.
+4.2. Quantitative results
+A quantum leap in performance with CAMERAS is also
+observed in our quantitative results. Saliency maps are typ-
+ically evaluated by measuring their correlation with the se-
+mantic annotations of the image. Pointing game [34] is a
+popular metric for that purpose, which considers the com-
+puted saliency for every object class in the image. If the
+maximal point in the saliency map is contained within the
+object, it is considered a hit; otherwise, a miss. The perfor-
+mance is measured as the percentage of successful hits. We
+refer to [34] for more details on the metric. Table 1 bench-
+marks the performance of CAMERAS for pointing game
+on 4, 952 images of PASCAL VOC test set [7], and ∼50K
+images of COCO 2014 validation set [16]. Our technique
+consistently shows superior performance, achieving up to
+27.5% error reduction. The gain is higher for ResNet as
+compared to VGG due the better performance of the origi-
+nal ResNet that permits better saliency.
+The pointing game generally disregards precision of the
+saliency maps by focusing only on the maximal points. Ar-
+guably, crudeness of the saliency maps computed by the ear-
+lier methods inﬂuenced this evaluation metric. The possibil-
+ity of precise saliency computation (by CAMERAS) calls
+for new metrics that account for the ﬁner details of saliency
+maps.
+We propose ‘positive map density’ and ‘negative
+map density’ as two suitable metrics, respectively deﬁned
+as: ρ+
+map = P(K(I ⊙Ψ))/ P
+j Ψ(i,j) × (h × w), and
+map = P(K(I ⊙1−Ψ))/ P
+j (1 −Ψ(i,j))×(h×w).
+VOC07 Test (All/Diff)
+COCO14 Val (All/Diff)
+Method
+VGG16
+ResNet50
+VGG16
+ResNet50
+Center [8]
+69.6/42.4
+69.6/42.4
+27.8/19.5
+27.8/19.5
+Gradient [27]
+76.3/56.9
+72.3/56.8
+37.7/31.4
+35.0/29.4
+DeConv. [33]
+67.5/44.2
+68.6/44.7
+30.7/23.0
+30.0/21.9
+Guid [30]
+75.9/53.0
+77.2/59.4
+39.1/31.4
+42.1/35.3
+MWP [34]
+77.1/56.6
+84.4/70.8
+39.8/32.8
+49.6/43.9
+cMWP [34]
+79.9/66.5
+90.7/82.1
+49.7/44.3
+58.5/53.6
+RISE∗[20]
+86.9/75.1
+86.4/78.8
+50.8/45.3
+54.7/50.0
+GradCAM [25] 86.6/74.0
+90.4/82.3
+54.2/49.0
+57.3/52.3
+Extremal∗[8]
+88.0/76.1
+88.9/78.7
+51.5/45.9
+56.5/51.5
+NormGrad [21] 81.9/64.8
+84.6/72.2
+CAMERAS
+86.2/76.2
+94.2/88.8
+55.4/50.7
+69.9/66.4
+Table 1. Mean accuracy on pointing game over the full data (All)
+splits and subset of difﬁcult images (Diff), as speciﬁed in [34]. The
+results of other schemes are generated with TorchRay package [8],
+and ‘*’ denotes an average over 3 runs for improved performance.
+Positive map density (ρ+
+map ↑)
+Negative map density (ρ−
+map ↓)
+Model
+NGrad
+GCAM
+Ours
+NGrad
+GCAM
+Ours
+ResNet
+1.67
+2.33
+3.20
+0.96
+0.86
+0.81
+DenseNet
+1.76
+2.35
+3.23
+1.02
+0.94
+0.83
+Inception
+2.19
+2.18
+3.15
+0.95
+1.04
+0.93
+Table 2. The proposed metric scores on ImageNet validation set
+for the saliency maps of Norm-Grad (NGrad) [21], Grad-CAM
+(GCAM) [25], and our method.
+Here, P(.) is the predicted probability of the actual label
+of the object. Other notations follow the conventions from
+above. For an estimated saliency map, the value of ρ+
+map im-
+proves if higher importance is attached to a smaller number
+of pixels that retain higher conﬁdence of the model on the
+original label. In the extreme case of all the pixels deemed
+maximally important (saliency value 1), the score depicts
+the model’s conﬁdence on the object label. On the other
+hand, the value of ρ−
+map decreases if lesser importance is at-
+tached by the saliency method to more pixels that do not
+inﬂuence the prediction conﬁdence on the original label.
+Lower value of this metric is more desired.
+Combined ρ+
+map and ρ−
+map provide a comprehensive quan-
+tiﬁcation of the quality of the saliency map. We provide
+results of our technique, Grad-CAM [25] and the recent
+Norm-Grad [21] on our metrics in Table 2. Due to page
+limits, we provide further discussion on the proposed met-
+rics in the supplementary material.
+5. CAMERAS for analysis
+The precise CAMERAS results allow model analysis
+with backpropagation saliency in unprecedented details.
+Below, we present a few interesting examples.
+The label attribution problem: It is known that deep
+visual classiﬁers sometimes learn incorrect association of
+labels with the objects in input images [9], [8].
+For in-
+stance, for the image of Chocolate Sauce in Fig. 3, Incep-
+tion is found to associate the said label to spoon instead of
+the sauce in the cup [9], [8]. This revelation was possi-
+ble only through the input perturbation-based methods for
+attribution due to their precise nature, however, only af-
+ter ﬁne-tuning a list of parameters for the speciﬁc images.
+Figure 3. Proposed CAMERAS allows veriﬁcation of label attribu-
+tion even more precisely than the input perturbation-based meth-
+ods. Meaningful [9] and Extremal [8] perturbation methods re-
+quire image-speciﬁc ﬁne tuning of parameters. The latter is con-
+ﬁned to 8% and 9% of the image area to achieve the results.
+Figure 4. Precise saliency of CAMERAS reveals similarity in the
+level of attention on ﬁne-grained features causes similarity in the
+prediction conﬁdence (given as percentages) of different models.
+CAMERAS is the ﬁrst backpropagation saliency method
+to achieve this result, without requiring any image-speciﬁc
+ﬁne tuning. Our method veriﬁes the original results of the
+perturbation-based methods with an even better precision.
+Prediction conﬁdence: In Fig. 4, CAMERAS results re-
+veal that prediction conﬁdence on individual images is often
+strongly inﬂuenced by a model’s attention on ﬁne-grained
+features. Different visual models may pay similar attention
+to the same features to achieve similar conﬁdence scores.
+Discrimination of similar objects: Precise saliency map-
+ping of CAMERAS also reveals clear differences of the
+features learned by the models for visually similar objects.
+In Fig. 5, we show the saliency maps for multiple exam-
+ples of ‘Chain-link Fence’ and ‘Swing’ for two high per-
+forming models. Notice how the models pay high atten-
+tion to the individual chain knots (left) as compared to the
+larger chain structures (right) to distinguish the two classes.
+These results also reinforce the importance of ‘not enforc-
+ing’ any priors on the map (e.g. smoothness [8]). The shown
+results provide the ﬁrst instance of clear saliency differ-
+ences between similar object features under backpropaga-
+tion saliency mapping without external priors.
+Figure 5. CAMERAS saliency maps reveal the differences of features learned by models to distinguish visually similar objects.
+6. Adversarial Attack Enhancement
+Similar to the backpropagation saliency methods, most
+of the adversarial attacks on deep visual classiﬁers [3] treat
+the models as differentiable programs. Using model gra-
+dients, they engineer additive noise (i.e. perturbations) that
+alter model predictions on an input. To avoid attack sus-
+picion, the perturbations must be kept norm-bounded. Pro-
+jected Gradient Descent (PGD) [18] is considered one of the
+strongest attacks [3] that computes holistic perturbations to
+fool the models. Using PGD as an example, we show that
+precision saliency of CAMERAS can signiﬁcantly enhance
+these attacks by conﬁning the perturbations to the regions
+considered more salient by our method, see Fig. 6.
+We iteratively solve for the following using the PGD
+min
+p (J (Ip, ℓll) + β ||p ⊙(1 −Ψ)||2) ,
+(4)
+where Ip is the perturbed image, J (.) is the cross en-
+tropy loss, ℓll is the least likely label of the clean image,
+p is the perturbation, and β = 50 is an empirically cho-
+sen scaling factor. In (4), we allow the perturbation sig-
+nal to grow freely for our salient regions while restricting it
+in the other regions. By focusing only on the most impor-
+tant regions, we are able to drastically reduce the required
+perturbation norm. Maintaining 99.99% fooling conﬁdence
+for ResNet-50 on all images of ImageNet validation set, we
+successfully reduced the PGD perturbation norm by 56.5%
+on average with our CAMERAS enhancement. See the sup-
+plementary material for more details. Other adversarial at-
+tacks can also be enhanced similarly with CAMERAS.
+6.1. Sanity test with adversarial perturbation
+Gradient-based adversarial attacks algorithmically com-
+pute minimal perturbations to image pixels to maximally
+change the model prediction. This objective coincides with
+the objective of image saliency computation, thereby pro-
+viding a natural sanity check for the saliency methods. That
+is, the effects of corruption with an adversarial perturbation
+to image pixels should correspond to the importance of the
+pixels identiﬁed by the saliency method. Leveraging this
+fact, we develop a sanity check for saliency methods that
+operates on pixel-by-pixel basis, which is more suited for
+precise image saliency. We provide details of the test in the
+supplementary material due to page limits.
+Figure 6. Enhancement of PGD with CAMERAS saliency. Con-
+ﬁning the perturbation to high importance regions discovered by
+CAMERAS drastically reduces visual perceptibility of the attack
+while maintaining the fooling ratio and conﬁdence on the wrong
+labels. For clarity, ℓ∞-norm of 12/255 is chosen for perturbation.
+7. Conclusion
+We introduced CAMERAS to compute precise saliency
+maps using the gradient backpropagation strategy.
+Our
+technique is shown to preserve the sanity of the computed
+saliency maps by avoiding external inﬂuence and priors
+over the maps. High precision of our saliency maps allow
+better explanation of deep visual model predictions. We
+also demonstrated application of CAMERAS to enhance
+adversarial attacks, and used this to introduce a new san-
+ity check for high-ﬁdelity saliency methods.
+Acknowledgment This research was supported by
+ARC Discovery Grant DP190102443 and partially by
+DP150100294 and DP150104251. The Titan V used in our
+experiments was donated by NVIDIA corporation.

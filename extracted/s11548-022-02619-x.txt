@@ -1,0 +1,659 @@
+https://doi.org/10.1007/s11548-022-02619-x
+ORIGINAL ARTICLE
+Explainability of deep neural networks for MRI analysis of brain tumors
+Ramy A. Zeineldin1,2,3
+· Mohamed E. Karar3
+· Ziad Elshaer4
+· Jan Coburger4
+· Christian R. Wirtz4
+Oliver Burgert2
+· Franziska Mathis-Ullrich1
+Received: 10 January 2022 / Accepted: 23 March 2022 / Published online: 23 April 2022
+© The Author(s) 2022
+Abstract
+Purpose Artiﬁcial intelligence (AI), in particular deep neural networks, has achieved remarkable results for medical image
+analysis in several applications. Yet the lack of explainability of deep neural models is considered the principal restriction
+before applying these methods in clinical practice.
+Methods In this study, we propose a NeuroXAI framework for explainable AI of deep learning networks to increase the
+trust of medical experts. NeuroXAI implements seven state-of-the-art explanation methods providing visualization maps to
+help make deep learning models transparent.
+Results NeuroXAI has been applied to two applications of the most widely investigated problems in brain imaging analysis,
+i.e., image classiﬁcation and segmentation using magnetic resonance (MR) modality. Visual attention maps of multiple XAI
+methods have been generated and compared for both applications. Another experiment demonstrated that NeuroXAI can
+provide information ﬂow visualization on internal layers of a segmentation CNN.
+Conclusion Due to its open architecture, ease of implementation, and scalability to new XAI methods, NeuroXAI could be
+utilized to assist radiologists and medical professionals in the detection and diagnosis of brain tumors in the clinical routine
+of cancer patients. The code of NeuroXAI is publicly accessible at https://github.com/razeineldin/NeuroXAI.
+Keyword Brain glioma · Computer-aided diagnosis · Convolutional neural networks · Explainable AI
+Introduction
+Brain and other nervous system tumors (ONS), including the
+glioblastoma (GBM), are among the leading cause of cancer
+death in adults [1, 2]. Brain cancer, explicitly malignant and
+benign, represents the second major source of cancer-related
+deaths in young adults and children [1]. Common treat-
+ment options for brain cancer include surgical intervention,
+radiotherapy, and chemotherapy [3]. Nevertheless, physi-
+cally localizing and resecting pathological targets by surgery
+B Ramy A. Zeineldin
+Ramy.Zeineldin@Reutlingen-University.DE
+Institute for Anthropomatics and Robotics, Karlsruhe Institute
+of Technology (KIT), 76131 Karlsruhe, Germany
+Research Group Computer Assisted Medicine (CaMed),
+Reutlingen University, 72762 Reutlingen, Germany
+Faculty of Electronic Engineering (FEE), Menouﬁa
+University, Menouf 32952, Egypt
+Department of Neurosurgery, University of Ulm, 89312
+Günzburg, Germany
+is almost impossible, owing to the difﬁculty in visually distin-
+guishing brain tumors from surrounding brain parenchyma
+[4].
+In practice, magnetic resonance imaging (MRI) can help
+physicians detect brain tumors by providing soft tissue imag-
+ing allowing improved tumor localization and boundary
+deﬁnition [5]. By varying the weightage of image contrast,
+the anatomy of the human brain, blood–brain barrier, and
+brain tumor boundaries could be detected and visualized.
+Multi-parametric MRI includes native T1-weighted (T1W),
+post-contrast T1-weighted (T1Gd), T2-weighted (T2W), and
+T2 ﬂuid-attenuated inversion recovery (FLAIR). However,
+interpreting these multi-modal images can be highly chal-
+lenging for physicians to analyze and provide diagnosis,
+make intraoperative decisions in a short time as wrong rem-
+edy procedures could lead to patient discomfort physically
+and ﬁnancially [3].
+Computer-aided diagnosis systems (CADs) aid in these
+cases to detect brain tumors using multimodal MRI scans,
+minimizing these inconveniences [6]. CADs are computer
+systems that assist radiologists and physicians in the interpre-
+tation, analysis, and evaluation of MRI data comprehensively
+in a short time, e.g., brain tumor segmentation and predicting
+histological grades of intracranial neoplasms [7, 8].
+Recent developments in the ﬁeld of artiﬁcial intelli-
+gence (AI), especially deep learning (DL), have led to a
+renewed interest in analyzing brain cancer, its causes, and
+its various development phases [9, 10]. In medical appli-
+cations, there are typically fewer data samples with higher
+complexity compared with other applications. Among the
+numerous segmentation techniques, convolutional neural
+networks (CNN) have attracted much attention for medical
+image understanding tasks like image classiﬁcation or mul-
+timodal tumor segmentation. For instance, U-Net variants
+[11, 12], which use symmetric encoder–decoder architecture,
+have performed state-of-the-art results for medical image
+segmentation. Similarly, several publications have appeared
+in recent years for accurate medical classiﬁcation includ-
+ing [8, 13–16]. Hence, employing DL technologies in CADs
+could potentially expand physicians’ capabilities assisting
+in perioperative evaluation of intracranial pathologies and
+enhancing the efﬁciency of postoperative follow-up [9, 10].
+Nevertheless, the introduction of DL techniques in the
+clinical environment is still limited due to some restrictions
+[17]. The most signiﬁcant one is that DL strategies consider
+only the input images and the output results, without any
+transparency of the underlying information ﬂow in the net-
+work internal layers. In sensitive applications such as brain
+imaging applications, it is crucial to understand the reason
+behind the network prediction to ensure that the model pro-
+vides the correct estimation. Accordingly, explainable AI
+(XAI) has gained a substantial interest to explore the “black
+box” DL networks in the medical ﬁeld [17, 18]. XAI meth-
+ods allow researchers, developers, and end-users to obtain
+transparent DL models that can describe their decisions to
+humans in an understandable manner. For medical end-users,
+the demand for explainability is increasing to create their
+trust in DL techniques and to encourage them to utilize these
+systems for assisting the clinical procedures. Moreover, the
+European Union data protection law, titled General Data Pro-
+tection Regulation (GDPR), imposes the explanation as a
+requirement for automated learning systems before being
+used with patients clinically [19].
+Related work
+Generally,
+XAI
+techniques
+medical
+imaging
+can
+be grouped into perturbation-based or gradient-based
+approaches. Perturbation-based methods investigate the net-
+work by changing the input features and measuring the
+impact on the output estimations by a forward training of
+the model. Some examples include LIME [20], SHAP [20],
+deconvolution [21], and occlusion [21]. Gradient-based XAI
+methods have been widely adopted to provide feature attri-
+bution maps by calculating the partial derivative of the output
+predictions through every layer of the neural network with
+respect to (w.r.t) the input images. These techniques have
+the advantage of being post hoc, meaning that they are
+applied after the training phase of the DL model avoiding the
+accuracy vs explainability trade-off. In addition, they are usu-
+ally fast compared with perturbation approaches since their
+runtime does not depend on the number of input features.
+A number of publications have been reported for back-
+propagating approaches such as Vanilla gradient [22], guided
+backpropagation [23], integrated gradients [24], guided inte-
+grated gradients [25], SmoothGrad [26], Grad-CAM [27],
+and guided Grad-CAM [27]. Several XAI methods have
+been previously proposed for natural image tasks, while little
+attention has been paid to explain brain imaging applica-
+tions [18]. For brain cancer classiﬁcation, Windisch et al.
+[28] applied 2D Grad-CAM to generate heatmaps indicating
+which areas of the input MRI made the classiﬁer decide on
+the category of the existence of a brain tumor. Similarly, 2D
+Grad-CAM was used in [29] to evaluate the performance of
+three DL models in brain tumor classiﬁcation. The key lim-
+itation of these studies is that experiments were concluded
+on 2D MRI slices without investigating the model on 3D
+medical applications.
+Explainable learning has been applied as well for brain
+glioma segmentation [30, 31]. In [30], 2D Grad-CAM was
+applied to extract explanations for the deep neural net-
+works for brain tumors identiﬁcation. It suffers from the
+same limitations associated with the previous classiﬁcation
+explanation methods of being 2D only. Another approach
+was introduced in [31] that extends class activation map-
+ping (CAM) [32] by generating 3D heatmaps to visualize
+the importance of segmentation output. Despite being highly
+class-discriminative, it made a trade-off between the model
+complexity and the performance to make CNNs transparent.
+In this paper, our main goal is to develop a new NeuroXAI
+framework for obtaining 2D and 3D explainable sensitivity
+maps to assist clinicians to understand and trust the perfor-
+mance of DL algorithms in clinical procedures. Hence, the
+contribution of this study has threefold:
+1. A new explainability framework, namely NeuroXAI,
+is proposed to make the current DL models for brain
+imaging research interpretable without any architecture
+modiﬁcation or performance degradation.
+2. NeuroXAI included seven state-of-the-art backpropagat-
+ing XAI techniques for generating 2D and 3D visual
+interpretations of CNN output.
+3. A comprehensive evaluation of the proposed frame-
+work demonstrated promising explanation results for two
+showcases of MRI classiﬁcation and segmentation of
+brain tumors.
+Methods
+NeuroXAI
+The overall pipeline of NeuroXAI is shown in Fig. 1. It con-
+sists of two main parts, which are a deep neural network to
+achieve processing tasks of the brain images and an expla-
+nation generator. Given brain MRI volumes as input, the
+images are forward propagated through the CNN generat-
+ingconvolutionalfeaturemapsandthenthroughtask-speciﬁc
+computations to obtain the desired output (e.g., category pre-
+diction in case of classiﬁcation and/or tumor segmentation).
+Afterward, the network output is presented to medical pro-
+fessionals to assess the ﬁndings and request an explanation if
+necessary. Finally, visual explanation maps are provided by
+the explainability part to interpret the results of applied deep
+neural networks. This can be achieved using state-of-the-art
+XAI methods.
+While the utilized explanation methods were primarily
+proposed for interpreting deep image classiﬁcation, our pro-
+posed framework provides an adaption approach to medical
+image segmentation as well. Further, NeuroXAI converts the
+segmentation task into a multi-label classiﬁcation task. This
+is achieved through global average pooling for each class on
+the output prediction layer. Therefore, our NeuroXAI offers
+state-of-the-art XAI methods for classiﬁcation and segmen-
+tation for both 2D and 3D medical image data.
+Vanilla gradient
+Vanilla gradient (VG) [22] is the simplest form of visualizing
+regions of the image that contributes most to the classiﬁcation
+output of the neural network. This computes the saliency map
+by making a single backward pass of the activation of the
+output class after a forward pass over the network, which
+can be deﬁned as computing the VG of the output activation
+w.r.t the input image. Let Pc(Im) be the prediction of class
+c, computed by the classiﬁcation layer of the CNN for an
+input image XI. The objective of Vanilla gradient is to ﬁnd
+the L2-regularized image, which has the maximum Pc, while
+λ is the regularization term:
+V G = argmaxc Pc
+X I
+−λ∥X I∥
+(1)
+Guided backpropagation
+An alternative way of calculating the gradient of a particu-
+lar output w.r.t the input is by using guided backpropagation
+(GBP) [23]. The GBP is a new variant of the deconvolu-
+tion approach [21] for visualizing the region of interest of an
+image that most activates a given class. Suppose F be the out-
+put of a convolutional layer l from L layers in a multi-layer
+CNN, and B denotes the resultant image from backpropaga-
+tion:
+i =
+i > 0
+Bl+1
+> 0
+.Bl+1
+(2)
+Bl+1
+= ∂F L
+∂Fl+1
+(3)
+Integrated gradients
+Sundararajan et al. [24] introduced integrated gradients (IG)
+tomitigatethesaturationproblemofgradient-basedmethods.
+Let a function F: Rn →[0, 1] denote a deep neural network
+which has XI = γ (α = 1) ∈Rn as the input image, while
+XB = γ (α = 0) ∈Rn represents the baseline. The baseline is
+simply a black image with all values set to zeros. The IG can
+be computed by accumulating the gradients at all points on
+the straight-line path from the baseline XB to the input image
+XI:
+IGi(x) =
+ 1
+α=0
+∂F(γ (α))
+∂γi(α)
+∂γi(α)
+(4)
+Here, i is the feature for the input image, whereas α rep-
+resents interpolation constant to perturb image features.
+Guided integrated gradients
+Kapishnikov et al. [25] proposed guided integrated gradients
+(GIG) as an adaption of the attribution path based on the
+input image, baseline, and the deep model to be explained.
+Similar to IG, the GIG calculates the gradients on the path (c)
+which starts at the baseline (XB) and ends at the input being
+explained (XI). However, the GIG path (c) is determined at
+every step as opposed to the ﬁxed direction of the IG. This
+means that GIG ﬁnds a subset of features (S) that have the
+least importance among all features toward the input image.
+Mathematically,
+GIGi
+X B, X I, F
+= ∂γ F
+i (α)
+x I
+i −x B
+i , i f iϵS,
+0, otherwise.
+(5)
+S = argmini(Y)
+(6)
+yi =
+ ∂F(x)
+∂xi
+, i f iϵ
+j|x j̸ = x I
+∞, otherwise.
+(7)
+Fig. 1 Pipeline of the proposed NeuroXAI framework
+SmoothGrad
+Smilkov et al. [26] presented an improvement for the com-
+mon problem of gradient-based methods. SmoothGrad [26]
+solved this problem by providing visually sharpened sensi-
+tivity maps. It computes the gradient over multiple samples
+surrounding the input XI, and the average is calculated after
+adding Gaussian noise. More formally,
+Mc(X I) = 1
+Mc(X I + g(0, σ 2))
+(8)
+where Mc(X I) is the original sensitivity map, n is the num-
+ber of samples, and g(0, σ 2) denotes Gaussian noise with
+variance σ 2. In general, Mc(X I) can be any gradient-based
+visualization method, such as explanation methods in the
+previous sub-sections.
+Grad-CAM
+The authors in [27] extended the class activation map-
+ping (CAM) visualization technique to a wide variety of
+CNNs. The proposed gradient CAM (GCAM) produces
+visual explanations without re-training or modiﬁcations in
+the model architecture. The gradient of any target class c is
+ﬁrst computed, and the activation feature map M of a spe-
+ciﬁc layer l is globally averaged over the width, height, and
+depth dimensions. Then, the class-discriminative heatmap of
+GCAM is obtained using a weighted combination of these
+activation maps, followed by the ReLU function. Here, αc
+denotes the neuron importance weights.
+GC AMc
+l = ReLU(
+l Ml)
+(9)
+l = 1
+∂yc
+∂Alx, y, z
+(10)
+Guided Grad-CAM
+Guided GCAM (GGCAM) was introduced to provide higher-
+resolution visualizations capturing ﬁne-grained details of
+the object of interest [27]. GGCAM fuses the point-space
+gradient visualization method GBP [23] and the class-
+discriminative coarse heatmaps of GCAM through element-
+wise multiplication. The estimated saliency map of GCAM
+is ﬁrst upsampled to the input XI spatial resolution using
+bilinear interpolation before applying the point-wise multi-
+plication with GBP.
+Table 1 List of the added top layers to the standard ResNet-50
+Type
+Output
+Feature maps
+Average Pooling 2D
+2 × 2
+Flatten
+Dense
+Dropout
+Dense
+Experiments
+Data
+MRI data from the BraTS challenges 2019 and 2021 [33–36]
+have been used in this study for accomplishing the classiﬁ-
+cation and segmentation tasks. Each subject has four MRI
+sequences including preoperative multimodal MRI scans of
+native T1W, Gadolinium T1Gd, T2W, and FLAIR, acquired
+frommultipledifferentinstitutions.Althoughthemainaimof
+the challenge is to compare the best algorithms for segment-
+ing the enhancing tumor (ET), the tumor core (TC), and the
+whole tumor (WT) regions, the BraTS 2019 dataset also pro-
+vides classiﬁcation labels for gliomas. BraTS 2019 database
+comprises 259 cases of high-grade gliomas (HGG) and 76
+cases of low-grade gliomas (LGG), which were used for the
+ﬁrst showcase. The second showcase applies the BraTS 2021
+database, which contains 1251 MRI images with ground truth
+annotations without any explicit glioma classiﬁcation.
+Since MRI sequences were acquired using multi-
+parametric instruments in multi-location centers, input
+images are needed to be standardized. A preprocessing stage
+has been applied to all MRI scans, speciﬁcally min–max scal-
+ing of each MRI modality using z-score normalization, and
+image cropping to a spatial resolution of 192 × 224 × 160.
+During the training, data augmentation was applied random
+ﬂipping, random rotations, intensity transformation, as well
+as dynamic patch augmentation cropping size of 128 × 128
+× 128 to avoid overﬁtting problems.
+Implementation
+For the classiﬁcation task, we employed a simple classiﬁer
+based on a pretrained ResNet [37] because of its accu-
+rate classiﬁcation results. Deep transfer learning was then
+adopted to make the model capable of extracting features
+from brain MR images. Table 1 summarizes the added top
+layers to the ResNet-50 in our experiment. For the segmen-
+tation task, an encoder–decoder neural network was utilized,
+named 3D DeepSeg [38]. The structure of our network is
+shown in Fig. 2.
+Both DL models were implemented using the TensorFlow
+library [39] version 2.4. Adam optimizer [40] was used to
+update the weights of the network, with an initial learning
+rate of 1e – 3 and 1e – 4 at the very beginning, and the maxi-
+mum number of training epochs is set to 150 and 1000, and
+batch size of 64 and 5 for the classiﬁcation and segmentation
+networks, respectively. Training the networks was performed
+on a single NVIDIA graphic card (RTX 2080Ti with 11 GB
+RAMorRTX3060with12GBRAM).Explainabilityexperi-
+ments were carried out after the training of the original neural
+network because of using post hoc XAI methods without
+network re-training or architecture modiﬁcations. The ﬁnal
+sensitivity maps were generated by our proposed NeuroXAI
+framework with the pretrained saved weights for both DL
+models.
+Results
+Showcase I: application to classification
+Here, we introduce the application of NeuroXAI to gener-
+ate visual explanations for automatic brain glioma grading
+using DL. The main objective of this study is to illustrate
+the explainability capabilities of our proposed NeuroXAI
+framework for assisting clinicians, not to obtain the best
+classiﬁcation results only. However, the applied classiﬁer
+achieved a superior accuracy of 98.62%, comparing to the
+state-of-the-art methods [8, 13–16] as given in Table 2.
+To better understand the deep model’s prediction, we used
+the DL model to visualize various sensitivity maps using
+NeuroXAI as shown in Fig. 3. These 3D feature visualiza-
+tions were generated from our model once the training is
+complete. Explanation maps by methods in (b-f) highlight
+all contributing features. In contrast, CAM heatmaps (g and
+h) highlight which regions of the input image are important
+for discriminating targeted classes.
+Moreover, the visualization maps by pixel-space XAI
+methods, such as GBP, IG, and GIG, underlined ﬁne-
+grained details in the input MRI image, but not being
+class-distinctive. In contrast, localization approaches like
+GCAM, are highly class-distinctive providing a smooth acti-
+vation map. Notably, combining GBP with GCAM yielded
+better-localized visualizations with high resolution. Smooth-
+Grad provided the best overall feature maps highlighting the
+main discriminative parts of the input FLAIR image so as
+to make the glioma grading. In contrast, VG provided noisy
+visualization maps compared with other methods due to the
+gradient saturation as reported in [41], making it less reliable
+for this application.
+Fig. 2 Overview of the architecture details of 3D CNN for glioma segmentation [38]
+Table 2 Comparison of our
+proposed classiﬁer and other
+deep models in previous studies
+Model/ Year
+Preprocessing
+Method
+Accuracy
+Ge et al. 2018 [8]
+Class balancing and tumor masks
+2D CNN
+90.87%
+Ge et al. 2020 [13]
+Tumor mask enhancement
+GAN*
+88.82%
+Mzoughi et al. 2020 [14]
+Intensity normalization, contrast
+enhancement, and cubic B-spline
+resizing
+3D CNN
+96.49%
+Ahuja et al. 2020 [15]
+Data normalization
+VGG
+99.30%
+Dixit and Nanda 2021 [16]
+Grayscale conversion and tumor
+segmentation
+IWOA-RBNN**
+96%
+Our classiﬁer
+Z-score normalization, image
+cropping, and transfer learning
+ResNet-50
+98.62%
+*GAN Generative adversarial network
+**IWOA-RBNN Improved whale optimization algorithm for radial basis neural network
+Showcase II: application to segmentation
+In this subsection, a feasible application of NeuroXAI is pro-
+vided to interpret deep brain glioma sub-region segmentation
+using multimodal MRIs. Table 3 presents the comparison
+of the proposed segmentation model with the existing tech-
+niques on the BraTS validation dataset. Remarkably, our DL
+model has achieved the best dice score coefﬁcient (DSC) of
+84.10, 87.33, and 92 for the enhancing tumor, tumor core,
+and whole tumor regions, respectively.
+Figure 4 shows the qualitative results from different XAI
+methods for explaining our glioma segmentation network. It
+can be seen that the employed visualization methods gener-
+ally clustered their attributions around the segmented brain
+tumor.Inparticular,GCAM,GGCAM,andSmoothGradpro-
+vided the least noisy visualization maps with the advantage of
+GCAM of being class discriminative. GBP generated high-
+resolution saliency maps in which the edges of the tumor
+sub-regions are highlighted instead of the tumor itself.
+Besides, we analyzed each layer output toward the trans-
+parency of the black-box segmentation model. This experi-
+ment, explicitly network inspection, aims to clarify the ﬂow
+of internal information in the neural network and whether this
+is in line with human-level concepts. For network inspection,
+GCAM was utilized since it allows visualizing activations in
+any layer of the deep network with respect to the network’s
+ﬁnal output for a particular decision of interest. Figure 5 pro-
+vides these explanation maps following the layers from the
+Fig. 3 Comparing different XAI visualization methods for brain glioma classiﬁcation. Sensitivity maps are presented for HGG cases in the ﬁrst four
+rows, while for LGG cases in the last three rows. Left to right: original MRI image, Vanilla gradient, guided backpropagation, integrated gradients,
+guided integrated gradients, SmoothGrad, Grad-CAM, and guided Grad-CAM visualizations. Note that in (b, c, d, e, f), all contributing features
+are highlighted in white, while in (g, h), red regions correspond to a high score for the predicted class
+input MRI scans to the predicted segmentation map. These
+layer-wise importance maps show that the deep network fol-
+lows a hierarchical nature similar to the human brain. For
+instance, layer 17 shows a neuron learning the initial brain
+boundaries, while the ﬁne-grained brain localization was
+achieved later in layer 21. Similarly, the tumor was initially
+detected in layer 8, but the ﬁnal precise segmentation was
+provided by the output layer.
+Moreover, this deep neural network can learn some
+explicit concepts, which the CNN was not originally trained
+on, as well as implicit concepts from the underlying dataset.
+For instance, layer 22 in Fig. 5g seems to be learning the
+whole tumor region, as an explicit concept from the ground
+truth labeling data. Another example is shown in Fig. 5c for
+layer 3 learning the gray and white matter as an implicit con-
+cept which is not included in the training annotations.
+Discussion
+DL has achieved the state-of-the-art in a wide range of med-
+ical tasks including medical image processing and analysis.
+By employing these AI advances in CADs, medical experts
+Table 3 Comparison of our segmentation model and existing methods on the validation set
+Model
+Preprocessing
+Method
+DSC
+ET*
+TC*
+WT*
+DeepSeg (2D) [7]
+FLAIR MRI, bias correction, data normalization, and transfer learning
+2D U-Net
+84.10
+DeepSeg (3D) [38]
+Z-score normalization and image cropping
+3D U-Net
+82.50
+84.73
+90.05
+Ilhan et al. 2022
+[42]
+FLAIR MRI, tumor localization, and histogram equalization
+U-net
+0.88
+nnU-Net [43]
+Image cropping, data normalization, image resampling
+U-Net
+79.45
+85.24
+91.19
+CASPIANET + +
+[44]
+Z-score normalization
+Attention
+U-Net
+81.08
+87.60
+91.20
+Our model
+Z-score normalization, image cropping, on-the-ﬂy data augmentation
+ResNet-50
+84.10
+87.33
+*ET, TC, and WT Enhancing tumor, tumor core, and whole tumor regions
+Fig. 4 Comparing different XAI visualization methods for brain glioma segmentation. Left to right: original MRI image, Vanilla gradient, guided
+backpropagation, integrated gradients, guided integrated gradients, SmoothGrad, Grad-CAM, guided Grad-CAM, and the manual truth annotations.
+Note that in (b, c, d, e, f), all contributing features are highlighted in white, while in (g, h), red regions correspond to a high score for the tumor
+region
+such as radiologists and surgeons become capable of detect-
+ing and diagnosing brain gliomas with great accuracy and
+shorterintervals.Adeepneuralnetworkconsistsofnumerous
+input, hidden, and output layers containing a large number
+of parameters (within millions). In applications increasingly
+vital to human healthcare, applying these models has been
+limited due to the lack of explainability.
+NeuroXAI implements seven different gradient-based
+explanation methods, namely VG, GBP, IG, GIG, Smooth-
+Grad, GCAM, and GGCAM, helping to make deep neural
+networks transparent. Each XAI method is unique and can
+be helpful in a different scenario with its inherent advantages
+and limitations. For example, VG is simple with the advan-
+tage of being supported by conventional machine learning
+frameworks such as TensorFlow [39] and PyTorch [45]. This
+makes VG applicable to any deep neural network without
+architectural modiﬁcations. On the other hand, the saliency
+maps generated by VG are noisy as well as they suffer from
+declining inﬂuences of features due to gradient saturation
+as reported in previous work [41]. GBP is efﬁcient in terms
+of implementation; however, it is limited to CNN models
+with ReLU activations and does not provide class-distinctive
+visualization maps.
+Recently, IG has become popular thanks to the ease of
+implementation, no requirement for instrumentation of the
+network, and ﬁxed number of calls to the gradient. GIG is
+an enhancement to eliminate the false perturbations problem
+of IG, but a choice has to be made at every step at the path
+from baseline to input, and thus the direction of the path is not
+ﬁxed.AlthoughSmoothGradcanhelpimprovevisualizations
+Fig. 5 Visualization of the information ﬂow in the segmentation CNN internal layers. The input MRI sequences are shown in (a). b–d show implicit
+concepts for which no ground truth labels are available in addition to explicit concepts e–g with trained labels. L stands for convolutional layer
+of the overall true signal with the major drawback of being
+non-class discriminative, conversely, GCAM allows inter-
+preting any convolutional layer of the CNN by highlighting
+the discriminative region and thus can help in understanding
+the internal functionality. To eliminate the lower-resolution
+heatmaps problem of GCAM, GGCAM was implemented as
+the combination of GBP and GCAM advantages.
+These explanation methods and their application to two
+common applications for brain imaging analysis tasks,
+namely brain glioma grading and glioma localization, have
+been examined in detail. For both applications, high-
+resolutiongradient-basedsaliencymaps,includingVG,GBP,
+IG, GIG, and SmoothGrad, highlight all contributing fea-
+tures, regardless of the selected class, as shown in Figs. 3
+and 4. On the other hand, GCAM and GGCAM localize the
+most important regions for the network decision. This is con-
+sistent with ﬁndings in [27] showing that humans can better
+understand regions instead of pixels. Besides, network dis-
+section, shown in Fig. 5, demonstrates that CNN follows a
+systematic approach for detecting the brain gliomas coher-
+ent with experts’ knowledge. First, the network learns the
+abstract features, such as the brain boundaries in Fig. 5a, and
+afterward identiﬁes ﬁnely detailed tumor boundaries shown
+in Fig. 5c.
+Conclusions and outlook
+This study presented a new explainability framework, named
+NeuroXAI, for assisting the interpretation of the behavior
+of DL networks using state-of-the-art visualization attention
+maps. NeuroXAI is post hoc and can therefore be applied
+to any deep neural models gaining insight into the behavior
+of these already trained models. Additionally, our two show-
+cases have demonstrated the signiﬁcance of incorporating
+XAI methods in medical image analysis tasks. NeuroXAI
+can also support the analysis of CNNs by providing an indi-
+vidual activation map for every internal ﬁlter. Moreover, our
+NeuroXAI results showed the importance of XAI for medical
+imaging tasks to understand DL models to accelerate their
+clinical acceptance by medical staff in the ﬁeld.
+Future work will be focused on the quantitative evaluation
+of XAI methods to assess the quality of the generated sensi-
+tivity maps and study their relationship with the DL accuracy
+metrics with additional experiments on multi-modal MRI-
+guided neurosurgery. Another main prospect of this research
+work is to investigate the possibility of extracting quantitative
+features from the explanation methods such as tumor volume
+and centroid.
+Acknowledgements The corresponding author is funded by the Ger-
+man Academic Exchange Service (DAAD) under scholarship No.
+91705803.
+Funding Open Access funding enabled and organized by Projekt
+DEAL.
+Declarations
+Conﬂict of interest The authors have no conﬂict of interest to disclose.
+Ethical approval This article does not contain any studies with human
+participants or animals performed by any of the authors.
+Informed consent This article does not contain patient data collected
+by any of the authors.
+Open Access
+This article is licensed under a Creative Commons Attri-
+bution 4.0 International License, which permits use, sharing, adaptation,
+distribution and reproduction in any medium or format, as long as you
+give appropriate credit to the original author(s) and the source, pro-
+vide a link to the Creative Commons licence, and indicate if changes
+were made. The images or other third party material in this article are
+included in the article’s Creative Commons licence, unless indicated
+otherwise in a credit line to the material. If material is not included in
+the article’s Creative Commons licence and your intended use is not
+permitted by statutory regulation or exceeds the permitted use, you will
+need to obtain permission directly from the copyright holder. To view a
+copy of this licence, visithttp://creativecommons.org/licenses/by/4.0/.

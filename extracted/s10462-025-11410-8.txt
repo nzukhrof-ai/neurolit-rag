@@ -1,0 +1,1251 @@
+Received: 20 June 2025 / Accepted: 23 September 2025 / Published online: 18 November 2025
+© The Author(s) 2025
+Extended author information available on the last page of the article
+Exploring the potential of explainable AI in brain tumor
+detection and classification: a systematic review
+Lincy Annet Abraham1
+· Gopinath Palanisamy1
+· Goutham Veerapu1
+J. S. Nisha1
+Artificial Intelligence Review (2026) 59:14
+https://doi.org/10.1007/s10462-025-11410-8
+Abstract
+The analysis and treatment of brain tumors are among the most difficult medical condi­
+tions. Brain tumors must be detected accurately and promptly to improve patient outcomes
+and plan effective treatments. Recently used advanced technologies such as artificial intel­
+ligence (AI) and machine learning (ML) have increased interest in applying AI to detect
+brain tumors. However, concerns have emerged regarding the reliability and transparency
+of AI models in medical settings, as their decision-making processes are often opaque and
+difficult to interpret. This research is unique in its focus on explainability in AI-based brain
+tumor detection, prioritizing confidence, safety, and clinical adoption over mere accuracy.
+It gives a thorough overview of XAI methodologies, problems, and uses, linking scientific
+advances to the needs of real-world healthcare. XAI is a sub-section of artificial intel­
+ligence that seeks to solve this problem by offering understandable and straightforward
+and providing explanations for the choices made by AI representations. Applications such
+as healthcare, where the interpretability of AI models is essential for guaranteeing pa­
+tient safety and fostering confidence between medical professionals and AI systems, have
+seen the introduction of XAI-based procedures. This paper reviews recent advancements
+in XAI-based brain tumor detection, focusing on methods that provide justifications for
+AI model predictions. The study highlights the advantages of XAI in improving patient
+outcomes and supporting medical decision-making. The findings reveal that ResNet 18
+performed better, with 94% training accuracy, 96.86% testing accuracy, low loss (0.012),
+and a rapid time (∼6s). ResNet 50 was a little slower (∼13s) but stable, with 92.86%
+test accuracy. DenseNet121 (Adam W) achieved the highest accuracy at 97.71%, but it
+was not consistent across all optimizers. ViT-GRU also got 97% accuracy with very little
+loss (0.008), although it took a long time to compute (around 49 s). On the other hand,
+VGG models (around 94% test accuracy) and MobileNetV2 (loss up to 6.024) were less
+reliable, even though they trained faster. Additionally, it explores various opportunities,
+challenges, and clinical applications. Based on these findings, this research offers a com­
+prehensive analysis of XAI-based brain tumor detection and encourages further investiga­
+tion in specific areas.
+1 3
+Keywords  Convolution neural networks(CNNs) · Artificial intelligence (AI) ·
+Explainable AI (XAI) · Machine learning (ML) · Gradient-weighted class activation
+mapping (Grad-CAM) · Local interpretable model-agnostic explanations (LIME) ·
+SHapley additive explanations (SHAP)
+Abbreviations
+Artificial intelligence
+BCM-CNN
+Brain classification model–CNN
+BraTS
+Brain tumor segmentation challenge
+BR35H-CNN
+Brain tumor classification with 35-layer hierarchical CNN
+CAD
+Computer-aided diagnosis
+CAM
+Class activation mapping
+CGAN
+Conditional generative adversarial network
+CNN
+Convolutional neural network
+Computed tomography
+DDI
+Deep dream image
+Deep learning
+FCN
+Fully convolutional network
+FLAIR
+Fluid-attenuated inversion recovery
+GAN
+Generative adversarial network
+GBM
+Glioblastoma multiforme
+GRU
+Gated recurrent unit
+Grad-CAM
+Gradient-weighted class activation mapping
+KBT
+Kaggle brain tumor
+KNN
+K-nearest neighbors
+LIME
+Local interpretable model-agnostic explanations
+LRP
+Layer-wise relevance propagation
+MICCAI
+Medical image computing and computer-assisted intervention
+MID
+Medical image dataset
+Machine learning
+MRI
+Magnetic resonance imaging
+OASIS
+Open access series of imaging studies
+PET
+Positron emission tomography
+PRISMA
+Preferred reporting items for systematic reviews and meta-analyses
+REMBRANDT
+REpository for Molecular BRain Neoplasia DaTa
+Random forest
+RNN
+Recurrent neural network
+SHAP
+SHapley additive explanations
+SVM
+Support vector machine
+TCIA
+The cancer imaging archive
+VAE
+Variational autoencoder
+VGG16
+Visual geometry group 16-layer CNN
+ViT
+Vision transformer
+WOA
+Whale optimization algorithm
+XAI
+Explainable artificial intelligence
+YOLO
+You only look once
+1 3
+Page 2 of 41
+1  Introduction
+Brain tumors are among the most challenging conditions to diagnose and treat because of
+their complexity and the wide range of symptoms that patients may experience. Although it
+has been demonstrated that artificial intelligence improves the accuracy and usefulness of
+brain tumor discovery, questions have been raised regarding the safety and dependability
+of AI algorithms in the health field due to their complexity and difficulty in understanding.
+To address this challenge, XAI has emerged, providing succinct and comprehensible clari­
+fications for the choices made by AI models. The medical community and the AI system
+can work together more effectively and with greater accountability when clinicians can
+comprehend the underlying causes of the AI’s predictions thanks to XAI techniques. This
+study summarizes the latest advancements in XAI-based brain tumor detection, including
+different methods for producing explanations, and talks about the opportunities and difficul­
+ties of applying XAI in clinical settings. Similar to other body organs, the brain can develop
+issues, including growths called brain tumors (Yurtsever et al. 2024). These tumors develop
+from abnormal cell growth in various regions of the brain, potentially leading to severe
+neurological complications and a significant decline in the patient’s quality of life. Most
+people concur that brain tumors rank among the deadliest diseases worldwide, and they
+significantly impact death rates across all age groups (Gyamfi et al. 2022). In terms of medi­
+cal diagnosis and treatment, this condition presents difficulties. These tumors can appear as
+pituitary, glioma, meningioma, or in cases where there is no tumor at all.
+Due to the composite structure of the brain, the nearly 120 different types of tumors
+that have been discovered so far are inspiring to identify due to their varied features and
+sizes. Edema, necrotic centers, and tumorous tissues are examples of tumorous areas that
+must be precisely identified and segmented to aid in diagnosis and action planning. It is
+unbearable to overstate the status of automatically identifying and categorizing medical
+images, especially when diagnosing brain tumors (Ahmed et al. 2024; Raghavendra et al.
+2023). For brain tumors to be treated more rapidly and give patients better outcomes, they
+must be detected and categorized early. This is followed by the same MID. It is the conven­
+tional method of finding brain tumors. PET, CT, and MRI scans are examples of medical
+imaging methods that are essential for identifying brain tumors. The most famous system
+for examining the brain’s structures is MRI. Because MRI is extensively used and real in
+investigating brain structures, it was selected as the preferred modality for our investigation
+study. Although MRI is capable of modeling regions of interest, the differences in strength
+levels brought about by different machine settings make it difficult to differentiate cancers
+(Abdusalomov et al. 2023). To this end, DL approaches are creating tools for brain cancer
+classification and segmentation. They provide precise and reliable information about the
+kind, location, and existence of tumors in computer-aided brain tumor diagnosis systems.
+PRISMA is a set of rules that makes sure systematic reviews and meta-analyses are
+clear, complete, and can be repeated. It combines a 27-item checklist and a flow diagram
+to concisely explain study selection, methods, and results. The PRISMA framework is fre­
+quently mandated by journals and funding agencies, and it has seen widespread adoption in
+healthcare and artificial intelligence in medicine. Its main goals are to increase the quality
+of reviews while decreasing bias.
+The Fig. 1 represents a comprehensive search was conducted across multiple reputable
+databases to capture a wide array of potentially relevant studies. The databases searched
+1 3
+Page 3 of 41
+included IEEE (44 records), Elsevier (2517 records), Springer (763 records), PubMed
+(39 records), and others (10 records), resulting in a total initial pool of studies. Before the
+screening phase, 1,696 records were excluded as they consisted primarily of books or mate­
+rials deemed irrelevant to the review scope. This left 1,677 studies to undergo title screen­
+ing, where each title was carefully evaluated for relevance to the research question. From
+this, 972 records were removed due to irrelevance.
+The abstracts of the remaining 705 studies were then assessed in detail. During this
+abstract screening phase, 521 articles were excluded based on several reasons: 212 were
+inaccessible despite efforts to retrieve them, 300 were considered out of scope for the spe­
+cific focus of the review, and 9 were published in languages not eligible for inclusion.
+Following abstract screening, 184 full-text articles were reviewed thoroughly to judge
+their eligibility against pre-established inclusion criteria. During this full-text assessment,
+93 articles were excluded due to not meeting the criteria, such as inadequate methodology
+or lack of focus on XAI and brain tumor detection.
+Ultimately, 91 high-quality and relevant studies were included in the final systematic
+review. This careful selection process, using clearly defined criteria and multiple screening
+Fig. 1  PRISMA chart showing the research strategy for proposed systematic review
+1 3
+Page 4 of 41
+stages, strengthens the validity of the review by ensuring that only pertinent and method­
+ologically sound research contributes to the analysis.
+The novelty of this review lies in the integration of real-time brain tumor detection and
+classification with XAI, providing not only accurate predictions but also interpretable expla­
+nations for clinical decision-making. The key contributions of this paper are as follows:
+Development of a robust detection–classification pipeline The proposed method inte­
+grates YOLO for tumor detection with advanced classifiers for precise tumor type iden­
+tification (e.g., glioma, meningioma, pituitary tumor).
+Incorporation of explainable AI Provides heatmaps and attention maps that explain why
+and where the model focuses, ensuring decisions are interpretable for radiologists and
+clinicians.
+Improved diagnostic accuracy Achieves high precision and recall compared to conven­
+tional CNN or transformer-based models without explainability.
+Trustworthy decision support system Helps clinicians validate AI predictions, reducing
+the risk of misdiagnosis and enhancing acceptance of AI in medical practice.
+Comprehensive evaluation Tested on benchmark brain tumor MRI datasets with com­
+parative analysis against state-of-the-art methods.
+2  Background
+There are two categories of deep learning models, input-dependent explanations and input-
+independent explanations. Directly explain the model without requiring network input to
+identify and elucidate the features associated with the significant influence of the prediction
+results. The segmentation and classifications are directly clarified by the use of medical
+imaging (Ali et al. 2020; Kumar and Vinod Kumar 2024). Typically, perturbation-based
+and gradient-based approaches use instance-level explanations to explain these tasks (Rus­
+tom et al. 2023). The number of input features that are computed to the various resources
+required to achieve better results determines the running time for both methods, which are
+used in the early stages to observe changes in output under various inputs. The next step is
+to decide between accuracy and interpretability. Fei Yan (2023) provides an estimate of the
+input feature’s importance in their description of GBM. Accuracy and computational loss
+are not balanced in the explainability training process. In recent years the use of the exten­
+sion method followed by CAM. Grad-CAM and Guided Grad-CAM are used to improve
+this procedure (Aeman et al. 2023).
+Researchers have employed target detection networks, followed by deep learning (DL),
+such as U-Net, VGG, ResNet, and GoogLeNet in medical submissions. It is central to ana­
+lyzing the series of diseases. Tian et al., used FCN for tumor cataloging and origination to
+improve the tumor localization effect (Rehman et al. 2020). The proposed model ACAE
+is used to classify the different shares and quickly detect the suspected areas. In recent
+years, Research scholars have used XAI to assess the model results. 3D CNN classification
+and explainability used to detect Alzheimer’s disease Murthy et al. (2022) Rosnelly et al.
+(2023). XAI is used for Natural image tasks followed by insufficient tasks to medical field.
+Explainability of Medical images has a significant role in the analysis of the great demand
+1 3
+Page 5 of 41
+and scalability followed by the degrees of health professionals followed by model results
+and operations.
+Figure 2 The dataset contains a collection of brain MRI pictures from Kaggle anno­
+tated to indicate checks the brain tumor is present or not. The datasets vary from the differ­
+ent brain tumors. Data preprocessing as MRI images help to remove the noise-normalized
+intensity values and provide the segment through brain regions from various backgrounds.
+The MRI brain scans are measured to find the types of brain tumors, this also comprises the
+various types of images such as T1-weighted, T2-weighted and FLAIR sequences which is
+also mentioned in the segmentation masks. The data type of concern method is 3D medi­
+cal imaging data. The labels of this data set contain the tumor segmentation. Based on this
+research used the BR35H -CNN model with XAI technique, the dataset set contains 3060
+brain images related to MRI in both tumor and non-tumor cases (Balwant 2022). The core
+research of this dataset is to classify the classification among brain tumor types, explain­
+able AI model development followed by to interpret the classification result. Image Prepro­
+cessing means providing Standardized imaging protocols, minimizing relics, and lowering
+inter-subject variability are some of the challenges we face when preprocessing primary
+MRI data. The process of feature extraction itself is difficult; to capture significant tumor
+characteristics, careful selection is needed. Data split contains the testing set, validation set,
+and training set. The classification model consists of DL and ML. Generating model consists
+of two types of methods such as LIME and SHAP.
+The workflow diagram in Fig. 3 consists of six steps data collection, data preparation,
+data preprocessing, feature extraction, training and validation, and model evaluations. Data
+preparation means collecting the samples in image format followed by the various acqui­
+sition parameters. Data preprocessing is used to check the quality of DL analysis. Fea­
+ture extraction, which means fine-tuning and identifying the brain tumors from MRI scans.
+Training and validation, which means evaluating the performance using various metrics
+Fig. 2  Flow diagram of brain tumor classification and detection
+1 3
+Page 6 of 41
+including accuracy, precision, recall, and F1-score.The workflow diagram obtained the
+highest average level of accuracy with positive instances.
+3  Algorithms for detection/classification of brain tumor
+AI technique combines ML and DL with revolutionized medical imaging. These approaches
+are enabled through automated extraction of relevant features with medical descriptions
+such as MRI and CT Scans. These all help to improve the accuracy and detection of brain
+tumors. To help radiologists, make better clinical decisions, AI models are made to recog­
+nize patterns in information that do not directly affect people’s judgment.
+3.1  Machine learning algorithms
+As a branch of AI and ML, it entails training models on a dataset to identify trends and
+generate predictions. The following machine learning procedures have been used to notice
+brain tumors, Brain tumors are classified using SVM, which uses features taken from imag­
+ing data. One collaborative learning method for tasks involving regression and classifica­
+tion is RF. A straightforward and efficient classification technique that has been used to
+identify brain tumors is KNN (Maqsood et al. 2022). These algorithms rely on manually
+extracted tumor area characteristics like texture, shape, and intensity. Decision trees operate
+by dividing data according to naturally interpretable feature values. It is possible to visualize
+Fig. 3  Work flow diagram of various steps used in the research approach
+1 3
+Page 7 of 41
+each decision node, demonstrating how characteristics such as tumor size, shape, or texture
+influence classification choices. Decision trees can be used as a variety of features, such
+as texture and intensity, or they can be used to determine the spatial relationship between
+MRI scans to classify brain tumors as benign. It is important to make the decision tree’s
+explainable AI components naturally interpretable so that feature importance analysis can
+be readily extracted. The decision path is easier to understand when the different tools, such
+as TreeSHAP are visualized. This algorithm’s benefits include transparency and ease of
+visualization.
+3.2  Deep learning algorithms
+Among DL techniques, CNNs have occurred as the most hopeful approach to brain tumor
+detection. The need for physical feature extraction can be avoided by using CNNs to
+mechanically learn hierarchical features from raw medical images. Deep learning’s capacity
+to manage sizable datasets and extract complex patterns straight from image pixels is what
+makes it so effective at detecting brain tumors (Rao et al. 2024). Gliomas, meningiomas,
+and pituitary tumors are among the brain tumors that CNN-based models are very good at
+identifying and categorizing (Vankdothu and Hameed 2022). CNNs are a key module of
+contemporary diagnostic AI because of their capacity to generalize across various kinds
+of brain tumor datasets. Pre-trained models, such as VGG16 and ResNet, are commonly
+optimized for brain tumor classification tasks to minimize the need for massive amounts of
+labeled data in transfer learning (Montaha et al. 2022).
+The Fig. 4 illustrates the trade-off between complexity and explainability in ML tech­
+niques, categorizing them into traditional ML and DL. Explainability is represented by
+the x-axis, which rises from left to right, and complexity by the y-axis, which rises from
+bottom to top. Although they offer clear decision-making processes, traditional machine
+Fig. 4  Complexity and explainability between ML and DL
+1 3
+Page 8 of 41
+learning techniques like Bayesian models, decision trees, and linear/logistic regression are
+positioned on the lower complexity and higher explainability side. However, they may have
+trouble handling intricate data patterns. Neural networks, CNNs, RNNs, and transform­
+ers are examples of deep learning models that fall on the side of greater complexity and
+lesser explainability.Despite being excellent at identifying complex relationships in data,
+these models are frequently viewed as black boxes since they are difficult to interpret. The
+graphic also emphasises XAI research goal, which is to close the gap by making compli­
+cated AI models easier to understand without sacrificing their predictive accuracy. Making
+deep learning models easier to understand is still a major obstacle to developing reliable and
+open AI systems as the technology develops.
+Deep learning architectures interact differently with explainability tools, influencing the
+nature and utility of generated explanations. CNNs, with their hierarchical spatial feature
+maps, are well-suited for gradient-based approaches such as Grad-CAM, which highlight
+discriminative regions in medical images. Transformer-based models, on the other hand,
+inherently incorporate self-attention mechanisms, enabling attention visualization and attri­
+bution methods (e.g., attention rollout, SHAP) to reveal feature dependencies across image
+regions. Generative models, including VAEs and GANs, can be integrated with counterfac­
+tual explanations to synthesize plausible alternative cases, thereby providing insight into
+feature-level reasoning and decision boundaries. Together, these interactions demonstrate
+that the choice of XAI technique should be closely aligned with the underlying model archi­
+tecture to maximize both fidelity and clinical usability.
+Transfer learning plays a crucial role in brain tumor classification by leveraging pre-
+trained models on large datasets to improve accuracy and reduce training time on limited
+medical data. Key points include:
+Improves accuracy Transfer learning uses features learned from large, diverse datasets
+(often non-medical) and fine-tunes them with brain tumor MRI data. This significantly
+improves classification accuracy for tumors such as benign vs malignant or specific
+tumor types like glioma, meningioma, and pituitary tumors, often reaching accuracy
+above 98–99%.
+Reduces data requirements By building on pre-trained deep neural networks (e.g.,
+ResNet, VGG, MobileNet), transfer learning reduces the need for large labeled medical
+image datasets, which are costly and difficult to obtain.
+Enhances generalization Fine-tuning pre-trained models on diverse brain tumor data­
+sets helps models generalize better to unseen samples and different imaging conditions.
+Speeds up training Transfer learning accelerates model convergence, enabling faster
+development and deployment of AI diagnostic tools.
+Supports multi-class classification Transfer learning enables effective differentiation
+among multiple tumor categories (e.g., glioma, meningioma, pituitary, no tumor) with
+high precision and recall.
+In summary, transfer learning significantly boosts the performance, efficiency, and scal­
+ability of AI systems for brain tumor classification, making it a vital technique in modern
+medical image analysis.Transfer learning plays a vital role in brain tumor classification
+by leveraging pre-trained deep learning models to improve accuracy, reduce the need for
+extensive labeled medical datasets, and accelerate training times. It allows models to uti­
+1 3
+Page 9 of 41
+lize learned features from large, diverse datasets and fine-tune them for brain tumor MRI
+images, achieving high precision and recall in distinguishing tumor types such as glioma,
+meningioma, pituitary tumors, and normal conditions. Transfer learning enhances general­
+ization to unseen cases and supports multi-class classification, making it a powerful tech­
+nique for efficient and effective brain tumor diagnosis.
+3.3  Explainable AI (XAI)
+Explainable AI in brain tumor detection and classification aims to make the decision-mak­
+ing process of complex AI models transparent and interpretable while maintaining high
+accuracy. Traditional deep learning models, though powerful in identifying tumors from
+MRI images, often operate as black boxes with limited explainability, making it difficult
+for clinicians to trust and validate their predictions. XAI techniques, such as Grad-CAM,
+SHAP, and LIME, are integrated with CNNs to highlight the most relevant tumor regions
+and critical features in the images, providing visual and quantitative explanations for the
+model’s decisions.
+By focusing on abnormal brain tissues responsible for different tumor subtypes, XAI-
+enhanced models improve classification performance and generalizability, achieving accu­
+racy as high as 99% on known data and about 95% on unseen datasets. This combination
+of interpretability and accuracy helps clinicians better understand, trust, and adopt AI tools
+for diagnosis. Furthermore, XAI methods validate that the models do not rely on irrelevant
+features or overfit the data, making them robust and reliable for real-world clinical applica­
+tions. The use of XAI in this domain represents a significant advancement toward transpar­
+ent, accountable, and effective medical AI systems for brain tumor diagnosis and treatment
+support.
+XAI techniques such as feature importance methods, SHAP, LIME, rule extraction,
+and visualization approaches like activation maps–break down these complex models into
+understandable components. They reveal which input features have the most influence,
+explain individual predictions locally, and highlight the critical regions or factors contribut­
+ing to decisions. This transparency fosters trust, accountability, and facilitates identification
+of biases or errors that would otherwise go unnoticed in black-box systems.
+Table 1 provides a comparative summary of widely used XAI techniques in brain tumor
+detection. Grad-CAM and CAM remain the most common methods due to their intuitive
+visual heatmaps that highlight tumor regions, which are particularly valuable in MRI-based
+localization tasks. However, these methods are often sensitive to noise or restricted by archi­
+tectural requirements. In contrast, model-agnostic approaches such as SHAP and LIME
+provide feature-level attributions with stronger theoretical grounding, though they are com­
+putationally expensive and sometimes unstable. The table highlights the trade-offs between
+interpretability, computational cost, and clinical applicability, underscoring the need for
+careful selection of XAI methods depending on the intended diagnostic workflow.
+As summarized in Table 2, each XAI method exhibits different levels of fidelity, robust­
+ness, and interpretability, highlighting the inherent trade-offs when applied to clinical deci­
+sion support
+While XAI methods have shown promise in improving model transparency, several limi­
+tations remain. Perturbation-based techniques such as LIME and SHAP often struggle with
+stability and reproducibility when applied to medical images, as small perturbations in high-
+1 3
+Page 10 of 41
+dimensional data can lead to inconsistent explanations. These methods also assume feature
+independence, which is rarely the case in complex medical imaging scenarios. Moreover,
+their computational overhead makes them impractical for real-time clinical decision sup­
+port. Gradient-based methods like Grad-CAM, although visually intuitive, may overlook
+global feature interactions and provide explanations that are architecture-dependent. These
+limitations highlight the need for more reliable, efficient, and clinically validated XAI
+approaches before large-scale deployment in healthcare settings.
+The main research gaps in XAI for brain tumor diagnosis and classification are centered
+around the following key challenges:
+XAI method
+Fidelity
+Robustness
+Clinician
+usability
+Trade-offs
+Grad-CAM
+High
+(localized
+heatmaps)
+Moderate
+(sensi­
+tive to
+architecture
+changes)
+High
+(visual,
+intuitive)
+May
+overlook
+global
+feature
+interactions
+LIME
+Moder­
+ate (local
+approxima­
+tion)
+Low–
+Moderate
+(unstable
+explana­
+tions)
+Moderate
+(feature
+weights
+need inter­
+pretation)
+Compu­
+tationally
+expensive;
+less con­
+sistent
+SHAP
+High (theo­
+retically
+grounded
+attributions)
+High
+(consistent
+across
+models)
+Moderate
+(requires
+tailored
+visualiza­
+tion)
+Complex
+and slow
+for large
+models
+Integrated
+gradients
+High
+(satisfies
+sensitivity
+axioms)
+Moderate
+(depends
+on baseline
+choice)
+Moderate
+(numeric
+attribu­
+tions less
+intuitive)
+Explana­
+tions less
+visually
+interpre­
+table
+Table 2  Comparison of widely
+used XAI techniques in terms
+of fidelity, robustness, clinician
+usability, and trade-offs
+XAI method
+Advantages
+Limitations
+Typical use
+Grad-CAM
+Visual heatmaps,
+intuitive for
+clinicians
+Sensitive to
+noise, may miss
+global decision
+logic
+MRI tumor
+localization
+SHAP
+Model-agnostic,
+strong theoretical
+basis, consis­
+tent feature
+attributions
+Computationally
+expensive, less
+suited for real-
+time use
+Feature
+attribution
+and model
+interpret­
+ability
+LIME
+Simple, flexible,
+works with any
+classifier
+Local explana­
+tions only, un­
+stable for small
+perturbations
+Explaining
+classifier
+decisions
+on medical
+images
+CAM
+Straightforward
+visualization of
+discriminative
+regions
+Requires specific
+network archi­
+tecture (global
+average pooling)
+Weakly-
+supervised
+tumor
+localization
+Table 1  Summary of common
+XAI methods, their advantages,
+limitations, and typical use in
+brain tumor detection
+1 3
+Page 11 of 41
+Limited interpretability in complex models Many deep learning approaches in brain
+tumor classification use complex architectures that make them difficult to interpret. This
+lack of interpretability can hinder clinicians’ understanding of the model’s decision pro­
+cess and can sometimes cause the models to focus on irrelevant or normal features,
+reducing reliability and clinical acceptance.
+Balancing model complexity and transparency Simplifying AI models can enhance
+transparency and deployment efficiency in clinical settings, but may compromise fea­
+ture extraction and accuracy. Complex models risk overfitting to irrelevant features;
+simpler models may fail to capture nuanced tumor characteristics.
+Generalizability and dataset diversity Current XAI-based models often suffer from lim­
+ited generalizability due to small or homogeneous datasets. Expanding the datasets with
+more varied MRI, and potentially integrating other modalities like PET or CT, would
+improve model robustness across a broader patient population.
+Clinical relevance of explanations Existing XAI techniques (such as Grad-CAM, SHAP,
+LIME) help provide interpretable results, but there is still a gap in offering clinically
+meaningful explanations that are easily trusted and actionable by medical professionals.
+More advanced XAI methods tailored to medical imaging are needed to make explana­
+tions directly relevant to clinical decision-making.
+Multimodal and real-time integration Most current models rely mainly on MRI images,
+often neglecting other important data sources like clinical history, genetics, and histo­
+logical data. Integration of multimodal information and development of real-time, inter­
+pretable systems for hospital workflows are emerging as important research directions.
+Model uncertainty and user interaction Present XAI methods often lack the ability to
+communicate the uncertainty of predictions or provide interactive, customized explana­
+tions needed for clinical risk assessment and user trust.
+Explainable AI addresses the black-box limitations of AI models by making their decision-
+making processes more transparent, understandable, and interpretable for humans. Here’s
+how XAI tackles these challenges:
+Feature importance XAI techniques highlight which input features most influenced the
+model’s decision, helping users understand what factors contributed to a specific predic­
+tion.
+Local and global explanations Methods like LIME and SHAP provide clear, human-
+readable explanations for individual predictions (local) or for the model’s overall be­
+havior (global). This helps users see why a model arrived at a certain output in specific
+cases as well as in general patterns.
+Visualization tools Techniques such as activation maps and attention mechanisms visu­
+ally reveal what parts of an input (such as regions in a medical image) the model focuses
+on, offering insight into the model’s reasoning.
+Rule extraction and surrogate models XAI can use simpler, interpretable models (like
+decision trees or rule-based systems) to approximate and explain the behavior of com­
+plex black-box models in understandable terms.
+Bias and error detection By making AI decisions transparent, XAI enables the identifi­
+cation of model biases and errors, supporting regulatory compliance and increasing user
+trust in critical fields such as healthcare and finance.
+1 3
+Page 12 of 41
+Building trust and enabling accountability XAI allows users, regulators, and stakehold­
+ers to trace, validate, and audit how and why a model makes its decisions, which is es­
+sential for responsible deployment in high-stakes situations.
+Furthermore, XAI enhances regulatory compliance and supports clinical adoption in sensi­
+tive domains like healthcare by enabling meaningful human oversight and validation of AI
+decisions. Although challenges remain in balancing the trade-off between interpretability
+and model complexity, XAI represents a crucial advancement in transforming black-box AI
+into explainable, trustworthy systems.
+3.3.1  Literature review
+The Table 3 summarizes recent research on the application of XAI in brain tumor detection
+and classification. The investigations encompass several strategies, including hybrid deep
+learning models, ensemble techniques, and counterfactual explanations. The main benefits
+of these research are that they make models easier to understand, boost trust and clinical
+relevance, and give visual explanations for how decisions are made. Nonetheless, obstacles
+persist, including substantial computing expenses, the necessity for extensive datasets, and
+the intricacy of models. Lack of specific implementation instructions is another reason why
+certain findings can’t be applied clinically or generalized to other types of tumors. Despite
+these problems, XAI techniques offer great potential in tackling interpretability issues in AI
+models, making them more helpful and trustworthy in clinical environments.
+3.4  Medical imaging modalities for brain tumor detection
+The following medical imaging modalities have primarily employed AI techniques to detect
+brain tumors: MRI is the most popular graphical method for brain tumor detection. They
+offer high-resolution pictures and can differentiate between various brain tissue types. MRI
+scans can be used for AI models that can detect growth patterns that could be signs of a
+tumor (Ullah et al. 2022). CT scans can still be used to find brain tumors, despite being less
+detailed than MRIs. AI algorithms can improve CT image analysis, particularly when MRI
+scans are not available in an emergency. Early tumor detection can be aided by PET scans,
+which determine metabolic activity in the brain. AI can help interpret PET data to improve
+tumor detection (Singh et al. 2020).
+3.5  Challenges in AI-based brain tumor detection
+Despite the significant progress artificial intelligence has made in detecting brain tumors,
+several problems still need to be fixed,
+3.5.1  Data quality and availability
+AI model performance is strongly influenced by the caliber and volume of training data.
+Annotated datasets of high quality are frequently scarce, particularly in the field of medical
+imaging (Kodipalli et al. 2024). The primary issue with medical imaging is that hospital pro­
+tocols differ. Many scanning parameters, such as resolution, thickness, contrast level, and
+1 3
+Page 13 of 41
+orientations, are included in this. The impact of this challenge has prompted an analysis of
+the variation among the images used to train the AI model, which failed to match the train­
+ing data when the real-world data was deployed. A standardized imaging protocol is used to
+address this issue and lessen its impact. The distribution of the various classes in the dataset
+may not be balanced, which is the issue with data imbalance.
+References
+Key focus
+Methodology
+Merits
+Demerits
+Hous­
+sein et al.
+(2025)
+A systemat­
+ic review of
+XAI in the
+processing
+of medical
+images
+Assessments
+the use of
+XAI for the
+purpose of AI
+openness
+Emphasizes
+the necessity
+for interpret­
+ability in
+clinical AI
+There is
+no new
+model
+pre­
+sented,
+simply a
+review
+Nahiduzza­
+man et al.
+(2025)
+XAI for
+finding
+brain
+tumors
+Brings
+together deep
+learning and
+XAI methods
+Increases
+trust and
+gives visual
+explanations
+Limited
+details on
+how to
+use it in
+the clinic
+Lamba
+et al.
+(2025)
+A hybrid
+model that
+combines
+ResNet101,
+Xception,
+and LIME
+Improves the
+accuracy and
+ease of under­
+standing of
+classifications
+Gives a
+detailed
+explanation
+for clinical
+validation
+Requires
+a lot of
+computa­
+tion
+Gundogan
+(2025)
+Using
+XAI with
+hybrid deep
+learning for
+multi-class
+classifica­
+tion
+Utilizes XAI
+for the cat­
+egorization of
+brain tumors
+from MRI
+Results that
+are easy to
+understand
+and very
+accurate
+Compu­
+tational
+overhead
+Farhan
+et al.
+(2025)
+Grad-
+CAM++
+is an
+ensemble-
+based deep
+learning
+method
+Uses Mo­
+bileNetV2,
+DenseNet121,
+and Grad-
+CAM++
+for tumor
+detection
+Strong perfor­
+mance that is
+useful in the
+clinic
+Requires
+large da­
+taset for
+training
+Chen et al.
+(2025)
+Counter­
+factual Ex­
+planations
+for Tumors
+(TACE)
+Utilizes coun­
+terfactuals for
+the change of
+tumor-specific
+characteristics
+Increases
+the rate of
+successful
+classification
+Only cer­
+tain types
+of tumors
+can be
+treated
+Shawon
+et al.
+(2025)
+Cost-sensi­
+tive neural
+networks
+using
+XAI for
+detection
+Deep neural
+networks
+that are
+cost-sensitive
+and use XAI
+approaches
+Fixes data
+imbalance
+and promises
+correctness
+Making
+models
+more
+compli­
+cated
+Li et al.
+(2024)
+MProtoNet
+for MRI
+data with
+several
+parameters
+Interpretable
+model based
+on cases with­
+out human-
+annotated
+labels
+Improves
+measures for
+understanding
+Needs
+a lot of
+info and
+comments
+Table 3  Summary of selected
+studies on explainable AI in
+brain tumor detection
+1 3
+Page 14 of 41
+Brain tumor datasets frequently have an under representation of some tumor types or
+a disproportionate number of healthy samples relative to tumor samples. Two trained AI
+models that are probably biased have the effect of making it difficult to detect underrepre­
+sented classes, which lowers the sensitivity. Data augmentation, under-sampling, and over-
+sampling are some of the methods used to solve this issue. A combination of technological
+advancements, moral behavior, and teamwork are needed to address issues with data avail­
+ability and quality in AI-based brain tumor detection. Although AI has a lot of promise to
+improve the detection of brain tumors, the development of trustworthy, generalizable, and
+objective models depends on the availability of diverse, high-quality, and well-annotated
+data. Several of these issues can be resolved with developments in data augmentation, fed­
+erated learning, transfer learning, and multimodal integration, opening the door for more
+precise and easily available AI-based medical devices.
+3.5.2  Generalization across datasets
+Due to differences in patient populations and scanning protocols, AI models trained on one
+dataset might not simplify well to data from other organizations or imaging equipment.
+The term generalization across datasets describes an AI model’s capacity to function effec­
+tively on fresh, untested data, even if the data originates from a different source, distribu­
+tion, or context than the training data. It is the key component for providing guarantee and
+robustness among AI models for detecting brain tumor detection in healthcare industries.
+After analysis, obtaining a good generalization based on AI-based brain tumor detection
+is difficult. These types of difficulties have differed from the various constraints such as
+patient information, image condition, and dataset. Here, the various types of problems in
+generalization included inter-patient variability and imbalance across the dataset. The major
+problem in AI-based brain tumor detection is generalized followed by the different types
+of datasets. Various types of strategies are used as transfer learning, data augmentation,
+domain adaption, multi-model learning, these are used to improve the model’s robustness to
+overcome these challenges. Here to develop the AI model through various clinical settings
+and patient populations will also require the creation of representative and diverse datasets,
+consistent annotations, and the application of strategies like active learning.
+Several publicly available datasets as shown in Fig. 5 are widely used for brain tumor
+detection, offering diverse imaging modalities, annotations, and tumor types. The BraTS
+dataset, provided by MICCAI, is one of the most popular and contains multimodal MRI
+scans (T1, T1c, T2, and FLAIR) with annotated tumor subregions, making it ideal for deep
+learning applications. The Figshare Brain Tumor Dataset consists of MRI images catego­
+rized into tumor and non-tumor classes, useful for basic classification tasks. Another notable
+dataset is REMBRANDT, hosted by TCIA, which includes MRI scans of glioma, glioblas­
+toma, and astrocytoma cases. Additionally, TCIA provides multiple brain tumor datasets,
+including glioblastoma and meningioma cases, with detailed clinical and imaging metadata.
+The Harvard Whole Brain Atlas and OASIS offer MRI scans covering both brain tumors and
+neurodegenerative conditions. Kaggle also hosts various brain tumor datasets, such as MRI
+images labeled by tumor type, making them accessible for machine learning research. These
+datasets enable researchers to develop and refine AI models for tumor detection, segmen­
+tation, and classification, ultimately contributing to advancements in medical diagnostics.
+1 3
+Page 15 of 41
+3.5.3  Interpretability
+AI models are accomplished by attaining high accuracy, but they are regularly regarded
+as black boxes, making it inspiring to understand the reason for predictions. This restricts
+their use in clinical settings, where interpretability and transparency are essential. A major
+challenge in AI-based brain tumor detection is generalization across datasets. AI models
+are covered by Black boxes, which contain high accuracy, which is the reason for predict­
+ing the results. Various types of restrictions are used for the clinical setting, which helps to
+understand the predictions. Here discussed the various challenges in AI-based Brain tumor
+detection among datasets. If the AI model was generalized should be affected by the dif­
+ferent types of imaging protocols followed by the various types of constraints. Different
+techniques are used as domain adaptation, data augmentation, multi-model learning, and
+regularizations, these all help to increase the performance of a given model, and it helps eas­
+ily overcome these types of problems. To develop the AI model was generalized along with
+clinical areas with patent information. Two types of strategies are used to check the modality
+difference and also overcome the various types of problems. The result is consistent after the
+interpretations. To explain the various types of complex models used by some classification
+tools such as SHAP and LIME. After interpretation analysis, the various ranges of patient
+Fig. 5  Datasets for Brain tumor detection
+1 3
+Page 16 of 41
+information should require the development of fairness awareness among the correction
+techniques. To overcome these types of issues AI model also improved the clinical settings
+with the adoption and trust of brain tumor detections.
+Future work for improving XAI interpretability is focused on several innovative
+approaches and research directions:
+XAI by design Moving beyond post-hoc explanations, researchers advocate building
+inherently explainable models. This involves designing new AI architectures that embed
+interpretability into their structure, making transparency a foundational feature rather
+than an add-on.
+Adaptive and user specific explanations Tailoring explanations to users’ expertise lev­
+els and specific needs, whether clinicians, patients, or regulators, by using interactive
+visualizations and non-technical language. This makes AI systems more accessible and
+usable across different stakeholders.
+Causal and counterfactual explanations Developing techniques that not only tell what
+influenced a model’s decision but also answer why and how potential changes in input
+would alter outcomes. This brings deeper insights into the model’s causal reasoning.
+Neuro-symbolic and hybrid models Integrating neural networks with symbolic reason­
+ing to combine high performance and human-readable explanations–a trend that has
+shown promise in making even deep learning models interpretable.
+Interactive and real-time explanations Allowing end-users to interact with AI systems
+for personalized, on-demand explanations and making AI reasoning transparent during
+operational decision-making.
+Federated and privacy preserving explainability Enabling XAI in decentralized and
+sensitive settings (such as healthcare) without revealing private or proprietary data–
+solving a key barrier in high-stakes domains.
+Democratization and tooling Expanding cloud-based XAI toolkits and APIs, making
+advanced interpretability features widely accessible and easy to implement.
+Domain-specific interpretability Customizing interpretability approaches for domains
+like healthcare, finance, and law, where regulatory requirements and decision impacts
+are significant.
+These directions will foster greater trust, accountability, and adoption for AI solutions
+by making models not only accurate but truly interpretable and transparent in real-world
+scenarios.
+3.5.4  Regulatory approval
+Provides the guarantee through clinical practice efficiency, AI-based tools used for valida­
+tion, and follows the regular approval procedures. From that stage, we followed the regular
+framework to check equity, transparency, and clinical efficiency. To describe the various
+problems related to post-market monitoring and to check the interpretability among the
+models. The requirement is based on checking the data privacy issue and clinical valida­
+tions. To overcome these issues, AI developers are to approve the process and increase the
+dependability of the system used in a clinical environment. To implement the various prac­
+tices related to data security and privacy.
+1 3
+Page 17 of 41
+3.5.5  Complexity of diverse data
+The multi-model datasets are used to provide the information through the brain such as
+“DWI, FLAIR, T1, T2, and Fat sat images”. These types of datasets are difficult to integrate
+and also have limited accessibility. MRI Data used for to analysis as in Fig. 6 of the main
+MRI imaging was inefficient. To develop the algorithms related to the MRI dataset, which
+means overcoming these issues.
+3.5.6  Class imbalance and tumor rarity
+Developing AI brain tumor detection systems faced various issues such as class imbalance
+and tumor rarity. Here addressed some issues in the Machine learning model as accuracy
+and sensitivity. To examine issues in brain tumor detection as class imbalance and tumor rar­
+ity. Large datasets contain the more normal MRI scans, AI model is used to profit the major­
+ity of the class and ignore the limited class results of imbalance. In terms of tumor detection,
+to mention the model sensitivity and accuracy. These are all the issues faced for reduced
+sensitivity, overfitting to the class, and false negatives. To overcome these issues followed
+by some methods such as Resampling techniques, class weighted loss function and anomaly
+detection and transfer learning programs. The uncommon issue of brain tumors as a rarity
+occurred in a small percentage of MRI Scans. Here, various misclassifications as lack of
+training data. Here the solution of this problem used a combination of various techniques
+including synthetic data generation, data augmentation, and few-shot learning. Cutting-edge
+machine learning techniques are used to identify the classification of uncommon and unbal­
+Fig. 6  Different MRI scan of brain tumor data
+1 3
+Page 18 of 41
+anced tumor types. Improving the generalization of uncommon tumor cases should require
+cooperative data-sharing initiatives with the advancement of few-shot learning.
+Class imbalance in brain tumor detection significantly affects the accuracy and overall
+performance of AI models. Key impacts include:
+Bias toward majority classes Models tend to be biased toward the majority class (e.g.,
+no-tumor cases) leading to poor sensitivity (recall) for minority tumor types such as
+Glioma or Meningioma. This can cause high false negative rates, missing actual tumor
+cases.
+Reduced detection accuracy for minority classes The minority tumor classes often have
+fewer samples, impairing the model’s ability to learn distinctive features. This results
+in lower precision, recall, and F1 scores for these classes compared to well-represented
+classes like Pituitary tumors or no tumor cases.
+Misclassification rates Imbalanced datasets can increase misclassification rates specifi­
+cally in rare tumor categories due to insufficient training examples, impacting clinical
+reliability of diagnostics.
+Model overfitting to majority class Without balancing techniques, models may overfit
+to majority class characteristics and fail to generalize well, reducing robustness across
+diverse patient data.
+In conclusion, addressing class imbalance is crucial for achieving high and clinically reli­
+able accuracy in brain tumor detection AI models by ensuring fair and effective learning
+across all tumor types and healthy cases
+3.5.7  Ethical and legal considerations in MRI studies
+The use of AI-based analytic models with MRI scans raises complex moral, ethical, and
+legal issues, primarily concerning patient privacy and potential algorithmic bias. It has to
+be ensured that the AI model is not only efficient, reasonable, and accurate but addresses
+important legal and ethical issues in MRI research about AI-based brain tumor detection.
+When applying AI systems in clinical decision-making, ethical challenges become espe­
+cially significant in cases involving rare tumors. The consequences of this type of issue are
+noted as overdiagnosis, false positives, and missed diagnoses. The AI model does not train
+through rare cases and results are unable to identify rare tumors. This can result in delayed
+or failed early-stage treatment. AI diagnoses are further complicated by inadequate or
+unrepresentative data, which can negatively impact subsequent medical decisions, includ­
+ing operations and treatments. Therefore, ethical oversight, along with awareness of the
+model’s limitations, is essential to address these issues effectively. Ethical AI in healthcare
+is designed to take responsibility for patient safety by minimizing risk and ensuring compli­
+ance with legal requirements.
+Ethical concerns in AI-based diagnostics can be resolved through a combination of regu­
+latory, technical, and operational strategies:
+Patient consent and transparency Patients must be clearly informed about how AI is
+used in their diagnosis and treatment, what data is collected, and any potential risks.
+Full transparency includes explaining how the AI system works and what role it plays
+1 3
+Page 19 of 41
+in medical decisions.
+Bias and fairness Rigorous evaluation and validation of AI algorithms should be per­
+formed on diverse, representative datasets to minimize bias. Independent third-party
+audits and ongoing monitoring can help ensure that algorithms are fair and equitable for
+all patient groups.
+Accountability and liability Clearly defined legal frameworks should determine respon­
+sibility in case of errors or harm caused by AI systems, potentially through joint liabil­
+ity between developers, healthcare providers, and institutions. Developers must certify
+their products’ safety and efficacy, while providers must use them appropriately.
+Data privacy and security Strong privacy safeguards must be applied, including data
+minimization, anonymization, and privacy-by-design features in AI models. Informed
+consent for data use and clear rules about data ownership are essential.
+Regulation and oversight Implementation of strict regulatory standards, independent
+audits, reporting guidelines specific to AI diagnostics (like STARD-AI), and ongoing
+performance monitoring help ensure ethical compliance, safety, and effectiveness.
+Continual improvement Regular updates to algorithms, ongoing research, and adapta­
+tion of legal systems are necessary to address new ethical challenges as AI evolves.
+Applying these principles creates a trustworthy environment for the use of AI in diagnostics,
+supporting patient rights, safety, and ethical medical practices.
+4  Discussion
+4.1  AI model for brain tumor detection and classification
+Brain tumors can have deadly significance and need costly, risky actions, as Mahfuz et
+al. described. Patients in certain regions suffer from excruciating pain and adverse out­
+comes, which emphasizes the crucial need for better methods of discovery and cataloging.
+To obtain accurate info or data about brain tumor cases, primary data collection engages
+in direct interactions with the public and healthcare earners. Having a major impact is the
+primary goal (Sadeghi et al. 2024). The main of this research is to describe the various
+challenges related to managing to detect brain tumors and also improve the uncovering and
+classifying the accuracy-related through the use of hybrid deep learning methods. This all-
+encompassing strategy aims to enable early interventions, improve performance accuracy,
+and improve the quality of life for people with brain tumors in Faridpur and the surrounding
+areas. The structure of the system consists of several layers and movable parameters. Each
+MRI image is processed by GRU layers after a series of ViT layers. To develop a compre­
+hensive tool for accurate brain tumors in medical imaging, we plan to use these components
+to improve temporal modeling detection and diagnosis feature representation for trustwor­
+thy termination decision-making.
+CNN is a crucial tool that shares many physical and practical comparisons with biotic
+and graphic schemes, as demonstrated by its shared image classification task. Rustom et al.
+(2023) The most straightforward way to monitor a CNNs performance on a tumor discovery
+and classification job across several trials is to use an exactness metric (Sinha et al. 2023).
+The testing accuracy of a network is determined by dividing the number of correctly secret
+1 3
+Page 20 of 41
+images by the total number of instances of that category in the testing set that were kept
+out of the network during the exercise. The use of animal transfer learning in camouflage
+offers a practical way to compare performance before and after. However, testing accuracy
+does not account for the impact of training on the internal state of the network. However,
+testing accuracy does not explain how training impacts the internal state of the network.
+This leads to the well-known black box problem in artificial intelligence, where the model’s
+operation is unclear, making it difficult to understand how a specific result was achieved
+(Khater et al. 2023). To counter this, we combine three specific XAI analysis methods with
+accuracy metrics in a unique way: feature spaces, DDI, and copy saliency mapping. These
+techniques allow us to examine the effects of brain tumor training and the proposed novel
+transfer learning regimen on the models (Shukla et al. 2024).
+Another method for viewing the inner state of an accomplished CNN is to use a feature
+visualization technique called DDI. For each category of objects, this algorithm generates
+a visual prototype or feature print by recognizing and improving particular visual patterns
+that the system finds in the input data during training. In this prototype, the inner representa­
+tion of each group by the network is essentially shown directly. However, image saliency
+maps, sometimes referred to as sensitivity maps, highlight the most salient features of each
+image. This technique provides insight into how a system makes cataloging decisions by
+overlaying an image with a heat map that highlights the areas of the input image that are
+most vital for sorting.
+Hanaa zainEldin et.al identifying a brain tumor requires time, and the radiologist’s
+knowledge is essential. Outdated practices are now costly and ineffective due to the grow­
+ing amount of data that must be managed along with the patient population. Numerous
+researchers looked into various algorithms that were quick and accurate in identifying and
+categorizing brain tumors (Zangana et al. 2024). To develop automated systems that can
+rapidly and precisely identify or segment brain tumors, DL techniques have newly become
+more and more popular. In particular, DL makes it possible to classify brain cancers using
+medical images using a pre-trained CNN model. For the suggested CNN-based brain tumor
+classification model (BCM-CNN), the CNN hyperparameters optimization is carried out
+using the algorithm (ADSCFGWO). After enhancing hyperparameters, a training model
+called Inception-ResnetV2 is built. In general, hyperparameters fall into two groups: (i)
+those that define the network’s basic structure, and (ii) those that control network training.
+The ADSCFGWO algorithm incorporates both the sine cosine and grey wolf algorithms,
+leveraging their respective strengths within a versatile framework (Nisar et al. 2021). The
+experiment’s findings show that the BCM-CNN classifier outperformed the others due to
+the CNNs enhanced presentation due to the CNN optimization’s hyperparameters. With the
+BraTS 2021 dataset, the BCM-CNN achieved 99.9% accuracy.
+Saurabh Mandli, the most prevalent and debilitating issue in modern times is brain
+tumors. A tumor’s late detection results in the death of numerous people every day; these
+deaths could have been prevented if the tumor had been discovered sooner. The complicated
+structure and uncontrollable growth of the tumor make early diagnosis extremely difficult.
+The development of CNNs and pre-trained models has led to the growth of numerous tumor
+detection replicas in recent decades. A significant lack of explanation and interpretability of
+the model is evident in the majority of the solutions, which only concentrate on accuracy
+(Jacqueline and Koppaiyan 2024).
+1 3
+Page 21 of 41
+Using pre-trained models, this work proposed an understandable perfect for brain
+tumor detection and classification. Four phases make up the proposed model. The first step
+involves creating synthetic MRI images of different classes using a provisional reproductive
+argumentative network (cGAN) to handle data overfitting and unbalancing. Brain tumors
+are identified in the second phase using various pre-trained representations, such as Mobile
+Net, Inception ResNet, Efficient Net, and VGGNet. If the tumor is identified, it is classified
+in the third phase using additional pre-trained models. In the final step, the model result is
+interpreted using LRP (GTIFA et al. 2024).
+Mohamed Musthafa et al, the ability of MRI to produce detailed, high-contrast images
+has made it a focus of research on brain tumor detection using their picture representation.
+The normal and abnormal brain tissues have been distinguished using a range of traditional
+image processing techniques, including feature extraction and segmentation. Various types
+of techniques are frequently used followed by different constraints. Based on the recent
+developments in analysis the automatic techniques for detecting brain tumors are used by
+ML algorithms. It supports growth and diagnosis effectively. Based on various instances
+most of the researchers used Random Forest Classifier and SVM, These are all implemented
+in MRI to identify the tumors. Machine learning techniques help to save time, but it is not
+supported by other types of datasets.
+Deep learning methods differ from traditional machine learning, it is enabled for learn­
+ing the feature followed by the physical judgment removal. These types of brain detection
+are faced with multiple types of issues focused on various demands. This research study
+mainly focused in to assess the model followed by performance testing, dataset, provides
+possible solutions. These are all helpful for the healthcare applications. The study intends
+to fill important gaps in the current state of medical imaging analysis by advancing a more
+transparent, intelligible, and trustworthy AI-based tool for brain tumor detection.
+Umme Aeman, describes an algorithm for deep learning that uses various pre-trained
+neural network models to detect and categorize brain tumors (Yang et al. 2023). Datasets
+that are frequently used in the medical imaging industry were used to assess the model. All
+things considered, the findings imply that pre-trained neural network models work well
+for classifying and categorizing brain tumors, and the suggested model may prove to be a
+helpful resource for specialists in neuroimaging. It is crucial to remember that extra study
+and testing are required to confirm the findings and raise the models’ accuracy (Nazir et al.
+2023). To detect the tumor images, we are introduced to deep CNN as a proposed layer.
+Image Net dataset is applied through a test for evaluation with the proposed model. Based
+on the result we have to compare the other classification this model achieved with 98.87%
+accuracy,99.2% specificity, and 99.5% sensitivity.
+The author describes about detection of brain tumors using CNN models, A deep learning
+method that provides efficiency among to modify the fuzzy C clustering. To classify deep
+learning models are used by optimizers as clustering. The datasets BraTS2015, 2017 and
+2018 are evaluated through the proposed model. In their optimized CNN framework, Ram­
+tekkar et al. (2023) utilized a compound filter for preprocessing, followed by GLCM-based
+feature extraction and hybrid metaheuristic optimizers (whale and gray wolf algorithms).
+This approach achieved an impressive detection accuracy of 98.9% on a brain tumor MRI
+dataset. The work proposed in Elhanashi et al. (2023) presents a deep learning-based frame­
+work for the classification and localization of multiple chest X-ray abnormalities, integrating
+1 3
+Page 22 of 41
+detection and recognition in a unified model. Their approach demonstrates high accuracy
+and robustness, contributing to improved computer-aided diagnosis in medical imaging.
+The diagnosis and detection of brain tumors is greatly aided by AI, a helpful addition to
+the infamously challenging field of brain tumor surgery. Neuropathology has undergone a
+radical change thanks to subsets of AI with ML and DL. Techniques like feature extraction,
+selection, reduction, classification, and data preprocessing involve a lot of steps. As per the
+author, AI has boosted neuropathologists’ self-assurance in detecting brain tumors. Recent
+advances in deep learning have produced a wide range of practical uses in domains as diverse
+as pattern cataloging, object discovery, voice appreciation, and decision-making. Health­
+care researchers have used a range of ML and DL algorithms, including SVMs, k-nearest
+neighbor (k-NN), Naive Bayes, trained CNNs, VGGNets, GoogLeNet, and ResNets, DT to
+diagnose cancer. Research progress is further hindered by the lack of complete medicinal
+datasets since patient information cannot be shared due to privacy concerns.
+Table 4 describes the datasets are used to detect brain tumors, in these different types
+of data sets are used. Explainable AI techniques used in BraTs 2019 and 2021 data set as
+Grad-CAM, guided integrated gradients. The result of this segmentation was achieved by
+84.10%. Data set BraTs 2020 used by explainable technique as ODE (neural ordinary dif­
+ferential equations), achieved by the accuracy rate as ET (explanation type) as 99.649%,
+TC (transparency context) as 99.425%, and WT (what to explain) as 99.383%. Grad CAM
+techniques used for data set BraTs 2018, accuracy rate as ET as 0.79%, WT as 0.91%, and
+TC as 0.85%. The explainable artificial intelligence technique (Grad Cam) used in BraTs
+2019 and FeTS2022 resulted in 0.745% of ET,0.782% of TC, and 0.882% of WT (Kumar
+and Jyoti 2024).
+Key challenges in generalizing AI models include:
+Dataset bias If the training data is not diverse or representative of real-world scenarios,
+models tend to learn superficial or context-specific patterns, causing poor performance
+when exposed to new or different datasets.
+Overfitting Complex models may become too tuned to the training data–capturing noise
+or irrelevant details–leading to high accuracy on training data but poor results on unseen
+data.
+Underfitting On the other hand, overly simple models fail to capture important patterns,
+resulting in suboptimal learning and generalization across datasets.
+Model complexity versus simplicity trade-off Striking the right balance between a suf­
+ficiently complex model (to capture key data features) and a simpler model (to avoid
+overfitting) is a persistent challenge.
+Scalability and adaptability: As data size and feature diversity grow, scaling models
+while maintaining generalizability becomes increasingly difficult.
+Domain shift and dataset shift AI models may not adapt well to data distributions that
+Dataset
+XAI
+Results
+BraTs 2020
+ODE
+ET−99.649%, TC−
+99.425%, WT−99.383%
+BraTs 2018
+Grad-CAM
+ET−0.79, WT−0.91,
+TC−0.85
+BraTs 2019 and
+FeTS 2022
+Grad-CAM
+ET−0.745, TC−0.782,
+WT−0.882
+Table 4  Dataset used for explain­
+able AI
+1 3
+Page 23 of 41
+differ from those seen during training–for example, due to geographic, demographic, or
+environmental changes.
+Ethical and fairness concerns Models must generalize fairly to all relevant populations.
+Ensuring that generalization does not come at the cost of introducing bias is essential in
+sensitive domains such as healthcare or finance.
+Effectively addressing these challenges is crucial for deploying robust AI models that work
+reliably across varied, real-world situations.
+4.2  Performance comparison of proposed model to other classification models
+This comparison table discusses the problems, approaches, algorithms, techniques, limita­
+tions, and results of existing and proposed papers. This review collected by 50 researchers
+comes from the 2020 to 2024. Table 5 shows the problem, Existing and proposed approaches,
+and results of these given problems. A data set for AI-based Brain tumor detection and clas­
+sification typically followed by the various choices of medical images related to MRI scans
+followed by the labeled with tumor identifications. The Data sets are used as the trained AI
+model of deep learning neural networks, it is used for automatically detect and classify brain
+tumors. Here explained some common data set is used for tumor detection and classifica­
+tion with AI. Classification and division of brain tumors are the typical uses for the BraTS
+Dataset. It provides multi-model MRI scans followed by FLAIR, T1, T2 sequence, and Tic.
+These kinds of data sets contain the manual segment followed by the segment annotations
+commonly used as classification tasks. KBT data set contains brain MRI pictures of patients
+with Brain tumors (Faris et al. 2024). It is specifically designed for classification that comes
+under the model identified as present or not. This data set contains 2500 images. The format
+of the dataset is JPG format and provides the label through specific tumor types. BTID is
+used to train the AI representations for tumor detection and classifications. NCI is used for
+AI applications in medical imaging. ISLES should be adopted by certain types of datasets
+and involving the segmentation and classifications. MICCAI (2017) mainly contains the
+segmentation of brain tumors provides multi-model imaging with tumor annotations and is
+used for both segmentation and classification among the various tasks. REMBRANDT is
+used for the advanced types of classification tasks (Gyamfi et al. 2022). Such datasets are
+used in AI models to identify and categorize brain tumors through data augmentation and
+image processing methods like MRI. CNN, U-Net for segmentation, and ResNet or VGG
+for classifications are all included in deep learning models K. Nishanth Rao, 2024.
+Brain tumor diagnosis remains a significant challenge in the medical field due to varia­
+tions in tumor size, location, and type. Accurate identification and analysis are crucial for
+early detection and effective treatment. Various computational approaches and machine
+learning techniques, including CNNs, Gradient Descent, and Decision Trees, have been
+widely utilized to enhance diagnostic accuracy. Many researchers have adopted deep
+learning methods in combination with CT and MRI to improve tumor classification and
+segmentation.
+Recent advancements in image processing, AI, and hybrid models have further refined
+tumor detection, leveraging pixel-based feature extraction and automated classification
+techniques. Studies have demonstrated 97.11% accuracy in tumor detection, while opti­
+mized frameworks utilizing deep learning models have achieved 98.67% accuracy. These
+1 3
+Page 24 of 41

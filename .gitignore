@@ -1,0 +1,6 @@
+.env
+vector_db/
+__pycache__/
+*.pyc
+chat_sessions.json
+chat_history.json

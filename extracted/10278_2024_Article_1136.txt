@@ -1,0 +1,655 @@
+Vol:.(1234567890)
+https://doi.org/10.1007/s10278-024-01136-4
+Gradient‑Based Saliency Maps Are Not Trustworthy Visual
+Explanations of Automated AI Musculoskeletal Diagnoses
+Kesavan Venkatesh1   · Simukayi Mutasa2 · Fletcher Moore2 · Jeremias Sulam1   · Paul H. Yi2
+Received: 8 February 2024 / Revised: 30 April 2024 / Accepted: 1 May 2024 / Published online: 6 May 2024
+© The Author(s) under exclusive licence to Society for Imaging Informatics in Medicine 2024
+Abstract
+Saliency maps are popularly used to “explain” decisions made by modern machine learning models, including deep con-
+volutional neural networks (DCNNs). While the resulting heatmaps purportedly indicate important image features, their
+“trustworthiness,” i.e., utility and robustness, has not been evaluated for musculoskeletal imaging. The purpose of this
+study was to systematically evaluate the trustworthiness of saliency maps used in disease diagnosis on upper extremity
+X-ray images. The underlying DCNNs were trained using the Stanford MURA dataset. We studied four trustworthiness
+criteria—(1) localization accuracy of abnormalities, (2) repeatability, (3) reproducibility, and (4) sensitivity to underlying
+DCNN weights—across six different gradient-based saliency methods (Grad-CAM (GCAM), gradient explanation (GRAD),
+integrated gradients (IG), Smoothgrad (SG), smooth IG (SIG), and XRAI). Ground-truth was defined by the consensus of
+three fellowship-trained musculoskeletal radiologists who each placed bounding boxes around abnormalities on a holdout
+saliency test set. Compared to radiologists, all saliency methods showed inferior localization (AUPRCs: 0.438 (SG)–0.590
+(XRAI); average radiologist AUPRC: 0.816), repeatability (IoUs: 0.427 (SG)–0.551 (IG); average radiologist IOU: 0.613),
+and reproducibility (IoUs: 0.250 (SG)–0.502 (XRAI); average radiologist IOU: 0.613) on abnormalities such as fractures,
+orthopedic hardware insertions, and arthritis. Five methods (GCAM, GRAD, IG, SG, XRAI) passed the sensitivity test.
+Ultimately, no saliency method met all four trustworthiness criteria; therefore, we recommend caution and rigorous evalu-
+ation of saliency maps prior to their clinical use.
+Keywords  Saliency methods · Trustworthy AI · Musculoskeletal radiology · Deep learning
+Introduction
+Deep learning algorithms are being increasingly explored for
+their potential to assist radiologists in disease diagnosis from
+medical images [1]. A class of these algorithms known as deep
+convolutional neural networks (DCNNs) map input images to
+output classifications by using convolutional filters that spa-
+tially process image information [2]. Different DCNNs are
+characterized by architectural differences such as the different
+kinds of layers used (e.g., residual layers, auxiliary networks),
+the depth of the network, the order of the layers, among other
+architectural choices. DCNNs have had success on a variety
+of radiology tasks, ranging from abnormality classification on
+chest X-rays [3, 4] to brain tumor segmentation [5].
+As deep learning algorithms transition from academic
+innovations to clinically implemented tools, the capacity to
+interpret model predictions (i.e., understand why and how
+a decision was made) is increasingly important in order to
+build physician trust in an algorithm [6]. This is an impor-
+tant challenge in the AI research community given the
+“black-box” nature of many deep learning algorithms. For
+example, DCNNs trained to diagnose disease from X-ray
+images taken at one hospital have not necessarily general-
+ized to other hospital settings because models can incor-
+rectly focus on confounding signals (e.g., hardware meta-
+data) rather than clinical features [7]. Model interpretability
+can help engineers and physicians debug these issues before
+reaching clinical deployment, or even reduce the amount of
+samples required for training [8].
+*	 Paul H. Yi
+pyi@som.umaryland.edu
+Department of Biomedical Engineering, Johns Hopkins
+University, Baltimore, MD, USA
+University of Maryland Medical Intelligent Imaging (UM2ii)
+Center, Department of Diagnostic Radiology and Nuclear
+Medicine, University of Maryland School of Medicine, 520
+W Lombard St, Baltimore, MD, USA
+Saliency methods are the current standard to produce
+visual explanations of a DCNN’s decision-making. These
+methods generate post hoc—i.e., after training the DCNN—
+heatmaps that quantify at the pixel level which regions were
+considered significant during classification of an image.
+These were initially, and continue to be, employed to sup-
+plement DCNN predictions with visual intuitions of “why”
+these decisions were made [3, 9–12]. However, recent stud-
+ies have underscored issues with saliency maps as reliable
+explanation tools. Adebayo et al. and Zhang et al. established
+that common saliency methods are not resistant to pertur-
+bations in the input image [13, 14]. Arun et al. proposed a
+framework for quantifying the “trustworthiness” of saliency
+maps in the context of chest X-ray diagnosis. The constitu-
+ent criteria included localization of disease abnormalities,
+a fundamental measurement that probed whether saliency
+heatmaps aligned with clinical reasoning [15].
+One remaining question from these studies is how notions
+of saliency map trustworthiness apply to different clini-
+cal data types, especially since the prevailing analysis has
+focused on chest X-rays [14, 16]. Jin et al. approached this
+from a perspective of multi-model imaging: the authors ana-
+lyzed if saliency maps carry information relevant to a par-
+ticular MRI modality [17]. The results suggested that many
+saliency methods failed to correlate for modality-specific
+features. However, the alternative perspective remains to
+be explored: how saliency maps compare between different
+clinical presentations within the same modality and task.
+The purpose of our study was to systematically evaluate
+the trustworthiness of saliency maps as visual explanations
+for deep learning algorithms that identify abnormalities on
+upper extremity radiographs. To our knowledge, this kind
+of analysis has not yet been explored in the context of mus-
+culoskeletal X-rays. We additionally probed how saliency
+trustworthiness differed across disease subtypes. Taken with
+the insights from Jin et al. [17], these experiments can shape
+a more comprehensive picture of how saliency maps vary
+across clinical presentations.
+Materials and Methods
+Data
+Our experiments used the Stanford MURA dataset [18]: a
+large open-source collection of musculoskeletal radiograph
+studies made available for research use by Rajpurkar et al.
+in 2018. All radiographs were obtained from the Picture
+Archive and Communications System at the Stanford Hos-
+pital between 2001 and 2012 and were de-identified prior
+to public release. At the time of initial interpretation, board-
+certified Stanford radiologists annotated each radiographic
+study with a binary label indicating whether an abnormality
+was present. Rajpurkar et al. retrospectively collected these
+studies and divided the overall dataset into a training set
+(13,457 studies, 36,808 images), validation set (1199 stud-
+ies, 3197 images), and test set (207 studies, 556 images),
+ensuring no patient overlap. However, only the training set
+and validation set were publicly released; the original test
+set was hidden for online competition purposes.
+We only used the publicly available MURA data—i.e.,
+the original training and validation sets—to train predic-
+tive DCNN models. Our training set was taken identically
+from the original dataset. We divided the originally provided
+validation set using a 60/40% split at the patient level to cre-
+ate our own validation and testing sets. A patient level split
+was done to avoid data leakage between the splits. Table 1
+provides a complete description of our training, validation,
+and testing sets.
+Our institutional review board acknowledged our study
+as non-human subjects research because our work used pub-
+licly available data only.
+Table 1   Description of (1)
+in-house training/validation/
+testing splits by number of
+images, studies, patients, and
+distribution of anatomical
+regions and (2) the saliency
+test set by number of
+images, studies, patients, and
+distribution of anatomical
+regions and abnormality
+subgroups
+Training set
+Validation set
+Testing set
+Saliency test set
+Number of images
+36,808
+Number of studies
+13,457
+Number of patients
+11,184
+Region, n (%)
+Elbow
+4931 (13.4)
+274 (14.5)
+191 (14.6)
+95 (16.2)
+Finger
+5106 (13.9)
+278 (14.7)
+183 (14.0)
+105 (17.9)
+Forearm
+1825 (5.0)
+176 (9.3)
+125 (9.5)
+61 (10.4)
+Hand
+5543 (15.1)
+273 (14.5)
+187 (14.3)
+63 (10.7)
+Humerus
+1272 (3.5)
+173 (9.2)
+115 (8.8)
+56 (9.5)
+Shoulder
+8379 (22.8)
+332 (17.6)
+231 (17.6)
+108 (18.4)
+Wrist
+9752 (26.5)
+380 (20.1)
+279 (21.3)
+100 (17.0)
+Subgroup, n (%)
+Arthritis
+n/a
+n/a
+n/a
+197 (33.5)
+Hardware/fracture
+n/a
+n/a
+n/a
+367 (62.4)
+Other
+n/a
+n/a
+n/a
+24 (4.1)
+Radiologist Annotations
+We curated spatial annotations for a subset of MURA
+radiographs to establish a clinical baseline for abnormality
+identification. Three board-certified and fellowship-trained
+musculoskeletal radiologists annotated where abnormalities
+were present in each test set image that was in fact labeled
+for presence of an abnormality (638 positive label images
+out of 1311 test set images). Radiologists knew a priori each
+image was positively labeled and were instructed to place
+rectangles (and as needed, free-form polygons) surrounding
+regions where they observed an abnormality. The ground-
+truth annotation for each image was obtained by taking a
+majority vote at the pixel level across the three radiologists’
+annotations (Fig. 1a). After making these spatial annota-
+tions, radiologists were finally instructed to provide a suc-
+cinct textual description of the kind of abnormality. These
+descriptions were not already available in the public MURA
+release; we used this information in subgroup analysis of
+saliency map trustworthiness.
+For 50 of the 638 images, the derived ground-truth
+annotation was empty. These were excluded from trust-
+worthiness evaluations due to ambiguity; therefore, the
+size of the annotated subset—i.e., “saliency test set”—was
+588 images (Table 1). The remaining images were tagged
+with one of three musculoskeletal abnormality subgroups:
+arthritis, hardware/fracture, or “other.” Tagging was based
+on one radiologist’s textual annotation, and ambiguities
+were clarified based on annotations from the other two
+radiologists. Hardware and fracture cases were combined
+due to frequent co-occurrence. The “other” category
+included tumors, lacerations, effusions, metaphyseal lucent
+lines, and amputations. This curated saliency test set was
+used in trustworthiness experiments.
+DCNN Training and Evaluation
+We trained DCNNs to predict the presence of an abnor-
+mality from individual radiographs. Our base classifi-
+cation models were DCNNs fine-tuned from ImageNet
+weights. We used the InceptionV3 [19] and DenseNet169
+[20] architectures due to their prior success on medical
+imaging tasks [3, 4, 18, 21] and previous use in saliency
+map trustworthiness evaluations for chest X-ray diag-
+nosis [15]. Standard data augmentation and preprocess-
+ing routines were consistently applied for input images
+(see Supplemental S.1 for details). Images were resized
+to 320 × 320 pixels to match prior experiments with the
+MURA dataset [18]. Hyperparameters were selected to
+maximize area under the receiver operating characteristic
+curve (AUROC) on our validation set (Supplemental S.1).
+Once optimal hyperparameters were identified, four final
+Fig. 1   Overview of trustworthiness framework. Images were anno-
+tated (a) by a team of musculoskeletal-trained radiologists and a con-
+sensus annotation was derived using a pixel-level majority vote. Four
+trustworthiness criteria—localization accuracy (b), heatmap consist-
+ency (includes both repeatability and reproducibility) (c), and heat-
+map sensitivity (d)—were quantitatively proposed and evaluated
+models—three InceptionV3s and one DenseNet169—were
+trained on the union of our training and validation sets.
+All DCNNs were evaluated on the testing set, which
+consisted of radiographic studies distinct from those in
+the training and validation sets. This lack of image over-
+lap ensures that the following test statistics were unbiased
+and independent (from, for example, hyperparameter tun-
+ing on the validation set). For each anatomical region, the
+AUROC, accuracy, precision, recall, and F1 scores were
+computed at the threshold yielding maximum accuracy.
+An overall weighted AUROC (wAUROC) was reported
+as the weighted average of individual anatomical region
+AUROCs. The weights were the proportion of abnormal
+test set images from each anatomical region. Other metrics
+were micro-averaged to yield overall performance metrics.
+Bootstrapping with 1000 resamples was implemented to
+estimate 95% confidence intervals for each metric. Pair-
+wise Tukey tests were used to statistically compare DCNN
+classification performance. Model training and statistical
+analyses were done using Python.
+Trustworthiness Evaluation
+We measured the “trustworthiness” of saliency maps in visu-
+alizing DCNN abnormality predictions on a musculoskeletal
+radiograph. Our operative definition of “trustworthiness”
+was adapted from Arun et al. [15]. We examined four cri-
+teria (described in the following subsections): (1) locali-
+zation accuracy, (2) repeatability, (3) reproducibility, and
+(4) sensitivity (Fig. 1). We additionally contribute a novel
+formulation of weak and strong versions for the first three
+criteria that represent sanity checks and radiologist-level
+comparisons, respectively. All trustworthiness experiments
+employed only images from the saliency test set, i.e., the
+annotated subset of positive label images in the test set.
+Six saliency gradient-based methods were tested: gradi-
+ent-weighted class activation mapping (GCAM) [22], gradi-
+ent explanation (GRAD) [23], integrated gradients (IG) [24],
+Smoothgrad (SG) [25], smooth integrated gradients (SIG)
+[24, 25], and XRAI (XRAI) [26]. (Guided BackProp [27] and
+Guided GradCAM [22, 28] were excluded because Adebayo
+et al. [13] showed these methods lacked sensitivity to higher-
+level network weights. Hooker et al. [29] additionally showed
+that Guided BackProp had worse feature importance estimations
+than random assignment.) To ensure fair comparisons, saliency
+maps were preprocessed before conducting experiments to
+match the radiologists’ annotation styles (Supplementary S.2).
+Localization Accuracy
+Localization measured the spatial concordance between
+heatmaps and ground-truth annotations. Saliency maps
+were derived from the best-performing InceptionV3
+classifier (as determined by wAUROC). We quantified
+localization accuracy using the pixel-level AUPRC dis-
+tribution between ground-truth annotations and saliency
+maps (Fig. 1b). To fairly evaluate the clinical utility of
+saliency localizations, we only considered radiographs in
+the saliency test set that were correctly classified by the
+InceptionV3 DCNN. Indeed, if the underlying prediction
+was incorrect, there is a confounding factor that can limit
+saliency map localization accuracy.
+In the weak version of this criteria, we compared the
+localization accuracy of saliency maps to that of raw images
+passed through a Canny edge detector [30] (with additional
+preprocessing similar to the saliency maps). The ration-
+ale was that saliency maps should be at least as accurate
+as an edge detector that can only identify edge-patterned
+abnormalities without any learning. In the strong version,
+we compared against the average of each radiologist’s
+localization accuracy with respect to the consensus anno-
+tation. Pairwise Tukey tests were performed to determine
+if saliency map AUPRCs were statistically higher than or
+comparable to that of its associated comparison in the weak
+and strong versions, respectively. Additionally, tests were
+performed at the abnormality subgroup level to identify
+potential hidden stratification.
+Heatmap Consistency
+Heatmap consistency included both repeatability and
+reproducibility scores. Repeatability tests evaluated the
+consistency of saliency maps between two InceptionV3
+DCNNs. In contrast, reproducibility scores measured the
+consistency of saliency maps between an InceptionV3 and
+DenseNet169 DCNN. The two best-performing Incep-
+tionV3 DCNNs were chosen for repeatability experi-
+ments, and the best InceptionV3 was chosen to compare
+against the DenseNet169 for reproducibility experi-
+ments. In both cases, the compared models had similar
+weighted AUROCs. We quantified consistency using the
+structural similarity index measure (SSIM), intersection-
+over-union (IoU), and binarized pixel error. This com-
+bination of metrics evaluated the similarity of saliency
+maps from three distinct perspectives: spatial structural
+information, regional overlap, and naïve per-pixel accu-
+racy (Fig. 1c). In the weak formulation, we compared
+each metric’s mean to a fixed threshold of 0.5. A saliency
+method passed the weak criteria only if every metric was
+significantly greater (in the case of SSIM and IoU) or
+lesser (in the case of pixel error) than this threshold. In
+the strong version, we set the threshold to be the mean
+radiologist concordance with ground-truth annotations. A
+saliency method passed the strong criteria if each metric
+was not significantly lesser (in the case of SSIM and IoU)
+or greater (in the case of pixel error) than its radiologist-
+derived threshold. One-sample one-sided t-tests were per-
+formed to make each comparison.
+Heatmap Sensitivity
+Heatmap sensitivity examined how saliency maps changed
+in response to randomization of the underlying model
+weights. Trustworthy saliency methods should demonstrate
+variance with respect to the trained DCNN: if successive
+DCNN layers are reinitialized to random values, then the
+associated saliency maps should degrade in quality. This
+process of accumulated randomization is known as cascad-
+ing randomization [13, 15]. We evaluated this condition
+on the InceptionV3 architecture over a small subset of 100
+images from the saliency test set. Three InceptionV3s were
+each divided into 17 layers and successively randomized
+from top (i.e., the logit layer) to the bottom (i.e., the first
+convolutional layer). At each step, saliency maps from a
+partially randomized model were compared using SSIM
+to those of its non-randomized fully trained parent model
+(Fig. 1d). The sequence of SSIM distributions was plotted
+to visualize the effects of cascading randomization.
+The sensitivity criterion was obtained by comparing the
+similarity scores of the fully randomized model to a saliency
+method-specific degradation threshold. This threshold was
+based on the average pairwise similarity of saliency maps
+derived from the fully trained models. A saliency method
+passed if its similarity scores were significantly lesser than the
+degradation threshold; otherwise, the saliency methods dem-
+onstrated unwanted invariance to model training. One-sample
+one-sided t-tests were used to make these comparisons.
+Results
+The best-performing InceptionV3 model and the DenseNet169
+model reported wAUROCs of 0.904 (LCI = 0.887, UCI = 0.921)
+and 0.905 (LCI = 0.887, UCI = 0.922), respectively, on the
+testing set (Table 2). No statistical differences were observed
+between these wAUROCs (p > 0.1). These scores are compa-
+rable to those reported in the original MURA study [18] and
+more recent experiments [31].
+All saliency methods passed the weak localization test
+and failed the strong localization test (Fig. 2a). XRAI
+scored the highest localization AUPRC (mean = 0.590,
+SD = 0.154), and SG scored the lowest (mean = 0.438,
+SD = 0.203). Comparisons against the edge detec-
+tor baseline (mean = 0.191, SD = 0.159) and radiolo-
+gist annotations (mean = 0.816, SD = 0.100) were sig-
+nificant (p < 0.001). Stratified analysis by the kind of
+abnormality revealed that hardware/fracture cases had
+better heatmap localizations compared to arthritis cases
+(Fig. 2b). These differences were prominent for IG,
+where the difference in mean AUPRC between hardware
+and arthritis cases was 0.174 (hardware, mean = 0.557,
+SD = 0.207; arthritis, mean = 0.383, SD = 0.248). None-
+theless, despite this observed hidden stratification, sali-
+ency methods continued to pass the weak localization
+test and fail the strong localization test at the subgroup
+level. (All localization scores are available in table form
+in Supplementary S.3.)
+Heatmap consistency demonstrated a dichotomy between
+repeatability (Fig. 3a) and reproducibility (Fig. 3b). Four
+saliency methods passed the weak repeatability criterion:
+GRAD, IG, SIG, and XRAI. The other two methods failed
+only because their mean IoU scores fell below the 0.5 thresh-
+old (GCAM, IoU: mean = 0.459, SD = 0.228; SG, IoU:
+mean = 0.427, SD = 0.218). However, no saliency method
+passed the weak reproducibility criteria; each was only
+constrained by the IoU condition. For example, XRAI was
+the closest to passing (SSIM: mean = 0.784, SD = 0.176;
+IoU: mean = 0.502, SD = 0.284; pixel error: mean = 0.183,
+SD = 0.165) but the IoU score distribution was not sig-
+nificantly greater than 0.5 (p > 0.05). No saliency method
+passed either the strong repeatability or reproducibility cri-
+teria. Indeed, the strong thresholds ( tSSIM = 0.951, tIoU =
+0.613, tPxlErr = 0.034) together posed a stringent requirement
+on heatmap consistency. (All repeatability and reproducibil-
+ity scores are available in table form in Supplementary S.3.)
+Table 2   DCNN classification performances of the four DCNNs
+(three InceptionV3s and one DenseNet169) used in trustworthiness
+experiments, as measured by anatomical region-weighted AUROC
+(wAUROC) and Cohen’s kappa statistic. One thousand-sample
+bootstrapping was implemented to obtain 95% confidence intervals
+(lower-bound, LCI; upper-bound, UCI). Superscript letters indicate
+statistical comparisons within the same metric using pairwise Tukey
+tests at 훼= 0.05 significance level
+DCNN architecture
+Weighted AUROC (wAUROC)
+Cohen’s kappa statistic
+Mean
+LCI
+UCI
+Mean
+LCI
+UCI
+InceptionV3
+0.904a
+0.887
+0.921
+0.680c
+0.641
+0.719
+0.902b
+0.884
+0.918
+0.689b
+0.649
+0.726
+0.898c
+0.880
+0.914
+0.680c
+0.641
+0.717
+DenseNet169
+0.905a
+0.887
+0.922
+0.701a
+0.658
+0.736
+Saliency methods generally demonstrated sensitivity to
+model randomization (Fig. 4). Five out of six saliency meth-
+ods (all except SIG) had statistically lesser SSIM scores for
+the fully randomized model compared to the degradation
+threshold. This difference was largest for GRAD ( tGRAD =
+0.768, mean = 0.647, SD = 0.068) and GCAM ( tGCAM = 0.579,
+mean = 0.469, SD = 0.097). Although SIG failed the test,
+SSIM scores did fall below the degradation threshold ( tSIG =
+0.721, mean = 0.720, SD = 0.092), suggesting that SIG sensi-
+tivity could have benefited from more InceptionV3 iterations.
+The impact on cascading randomization on heatmap qual-
+ity was observed alongside the change in weighted AUROC
+(Fig. 5). This provides a useful context for the cascading ran-
+domization plots: non-monotonicity and non-uniformity in
+layerwise changes in SSIM were coupled with similar patterns
+in classification performance. (All sensitivity scores are avail-
+able in table form in Supplementary S.3.)
+Discussion
+Although saliency maps have been used widely for
+explainability and disease localization in AI for radiol-
+ogy, their trustworthiness has been called into question
+[13, 15, 16]. In this study, we evaluated the trustworthiness
+of six state-of-the-art saliency methods for the diagnosis
+of abnormalities on upper extremity radiographs. Trust-
+worthiness was defined as the combination of saliency
+map localization, repeatability, reproducibility, and sen-
+sitivity. For the first three criteria, we defined a weak ver-
+sion, which served as a sanity check, and a strong version,
+which enforced stricter conditions that correlate to human
+performance. Finally, we identified hidden stratification
+in localization accuracies by subgrouping the annotated
+abnormalities into arthritis, hardware/fracture, and extra-
+neous cases. Our trustworthiness results are summarized
+in Table 3.
+All six saliency methods passed the weak localization
+criterion but failed the strong version, suggesting they
+possessed non-trivial yet sub-radiologist disease localization
+capacity. This finding is consistent with studies of saliency
+map localization on chest X-rays. Saporta et  al. [16]
+found that localization of chest X-ray pathologies present
+in CheXpert [32] was significantly worse than human
+benchmarks, and Arun et al. [15] found that localization
+of both pneumothorax and pneumonia was inferior to
+specifically trained segmentation or object-detecting
+DCNNs, respectively. We also found that XRAI was the best
+localizing saliency method; this agrees with the results from
+Arun et al. [15] and is likely due to the recursive scheme
+of the XRAI method [26]. It is important to note that our
+analysis of localization excludes instances of inaccurate
+DCNN predictions—that is, only if the image was correctly
+classified do we evaluate localization accuracy. This
+mitigated the potential for DCNN errors to confound our
+analysis of saliency methods.
+We also identified disparities in localization perfor-
+mance based on the kind of abnormality. These results ech-
+oed the take-home points from Oakden-Rayner et al. [33]:
+schema completion—i.e., assigning more complete subclass
+labels beneath the superclass—often reveals label imbal-
+ances that correlate to uneven AI performance across these
+labels. In our study, we extended these insights to saliency
+map efficacy. Hardware/fracture cases had higher saliency
+Fig. 2   Localization scores reported for saliency methods at the a
+aggregate level and b abnormality subgroup level (color legend: blue,
+hardware/fractures; orange, arthritis; green, other). Saliency methods
+(including edge detector and inter-radiologist baselines) are plotted
+along the horizontal axis, and the vertical axis plots pixel-level area
+under the precision-recall curve (AUPRC). Box-plots display median,
+interquartile range, and outliers. (a) Superscript letters indicate statisti-
+cal comparisons between (a) saliency methods (including edge-detector
+and inter-radiologist baseline) or (b) subgroups within each saliency
+method using pairwise Tukey tests at 훼= 0.05 significance level
+localization AUROCs than arthritis cases. We posit this was
+likely due to the sharper contours of fractures and clearer
+boundaries for metalwork relative to arthritis presenta-
+tion. Similar findings of hidden stratification in saliency
+localization based on the disease pathology have been shown
+by Saporta et al. [16]; our study builds on this by clearly
+highlighting an instance of hidden stratification that be dan-
+gerous in AI visualization.
+Fig. 3   Saliency method a repeatability and b reproducibility, as measured by SSIM (left panel), IoU (middle panel), and pixel error (right panel).
+Superscript letters indicate statistical comparisons between saliency methods using pairwise Tukey tests at 훼= 0.05 significance level
+We showed that saliency methods differentiate between
+repeatability and reproducibility. While most saliency meth-
+ods passed the weak repeatability test, all failed the weak
+reproducibility test. In other words, saliency maps for a single
+image notably differed based on the underlying DCNN archi-
+tecture (i.e., InceptionV3 vs. DenseNet121), despite similar
+classification performance. GCAM and SG struggled on
+both kinds of heatmap consistency evaluations. This partially
+concords with the results presented by Arun et al. [15], where
+SG exhibited similar struggles on repeatability and reproduc-
+ibility. Differences for other methods might be due to domain-
+specific phenomena, i.e., chest versus musculoskeletal X-rays.
+However, in concordance with the overall conclusion from
+Arun et al. [15], we found that no saliency method passed a
+strong repeatability or reproducibility test. The inability to
+pass strong repeatability and reproducibility criteria indicates
+Fig. 4   Saliency method sensi-
+tivity to model weights as meas-
+ured by cascading randomiza-
+tion (color legend: red, GCAM;
+dark blue, GRAD; yellow, IG;
+green, SG; light blue/teal, SIG;
+purple, XRAI). Dotted horizon-
+tal lines indicate the associated
+saliency method’s degradation
+threshold. Sequential randomi-
+zation layers are plotted along
+the horizontal axis (begin-
+ning with the non-randomized
+model), and the SSIM relative
+to non-randomized heatmaps is
+plotted along the vertical axis
+Fig. 5   GradCAM sensitivity
+(red, left vertical axis) and
+DCNN classifier wAUC (blue,
+right vertical axis) as a function
+of cascading randomization
+layer (horizontal axis)
+that radiologist annotations were significantly more consistent
+than deep learning-derived saliency maps.
+Every saliency method except for SIG demonstrated sen-
+sitivity to DCNN training. Arun et al. [15] similarly found
+that most saliency methods performed well on the weight
+randomization task. The only discrepancy between the
+results was with SIG, and this difference might be due to
+distribution-dependent effects on the randomization task,
+as critiqued by Yona and Greenfeld [34].
+There are a few limitations in this study. First, the
+MURA dataset proved occasionally difficult to annotate
+for disease abnormality. Since the dataset is structured into
+studies, i.e., groups of images, one image alone may not
+have elucidated the abnormality apparent in the patient.
+Therefore, the annotated test set likely contained some
+views of a patient that did not highlight the abnormal-
+ity that was known to exist. We accommodated this by
+removing those views from the saliency test set. Second,
+we only studied two DCNN architectures, InceptionV3 and
+DenseNet, in our reproducibility tests. The chosen archi-
+tectures have been widely used in medical imaging stud-
+ies with state-of-the-art performance; prior work by Arun
+et al. [15] similarly used these two base architectures for
+evaluating saliency maps on chest X-rays. Finally, we only
+studied the properties of gradient-based saliency methods,
+since these are the current state-of-art in visual explana-
+tion. Newer approaches such as SHAP [35] and h-SHAP
+[36] (which have more precise theoretical foundations
+[37]), as well as directly trained saliency maps [38], can
+be analyzed under this framework in future work.
+Conclusions
+Evaluating the trustworthiness of saliency methods used for
+diagnostic deep learning algorithms on upper extremity radi-
+ographs demonstrated that saliency methods critically suffer
+in localization capacity, repeatability, and reproducibility,
+as compared to radiologist annotations of disease. Saliency
+methods also demonstrate hidden stratification wherein
+abnormalities with clearer contours, such as hardware inserts
+and fractures, have better localization accuracy as opposed
+to less localized pathologies, such as arthritis. These results
+suggest that saliency methods may not be fully ready for
+clinical use, and more work must be done to make deep
+learning interpretations truly “trustworthy” before they are
+deployed in clinical diagnostic settings.
+Supplementary Information  The online version contains supplemen-
+tary material available at https://​doi.​org/​10.​1007/​s10278-​024-​01136-4.
+Author Contribution  All authors contributed to the study conception
+and design. Material preparation, data collection, and analysis were
+performed by K.V. The first draft of the manuscript was written by K.V.
+and all authors commented on previous versions of the manuscript. All
+authors read and approved the final manuscript.
+Funding  This work was supported by the Johns Hopkins Biomedical
+Engineering Leong Undergraduate Research Fund. J.S. is supported by
+NSF CAREER Award CCF 2239787.
+Code and Data Availability  We make our code repository available
+upon publication at https://​github.​com/​kvenk​atesh5/​salie​ncy-​trust​worth​
+iness. All imaging data used is in the public domain and available in
+the references provided in the manuscript text.
+Declarations
+Ethics Approval  This study used publicly available data and was con-
+sidered not human subjects research. Therefore, institutional review
+board review was waived.
+Competing Interests  The authors declare no competing interests.
