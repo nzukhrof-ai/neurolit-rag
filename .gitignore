@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 chat_sessions.json
 chat_history.json
+papers/
+extracted/
